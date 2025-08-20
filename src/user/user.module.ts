@@ -1,4 +1,3 @@
-
 import { Module } from '@nestjs/common';
 import { UserController } from './presentation/user.controller';
 import { RegisterUserUseCase } from './application/use-cases/register-user.usecase';
@@ -15,9 +14,14 @@ import { UserRepositoryImpl } from './infrastructure/user.repository.impl';
 import { USER_REPOSITORY } from './domain/repositories/user-repository.token';
 import { PASSWORD_HASHER } from './domain/repositories/password-hasher.token';
 import { JwtStrategy } from '../shared/guards/jwt.strategy';
+import { ActivateAccountUseCase } from './application/use-cases/active-account.usecase';
+import Mail from 'nodemailer/lib/mailer';
+import { MailService } from 'src/shared/infrastructure/mail.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+  ],
   controllers: [UserController],
   providers: [
     RegisterUserUseCase,
@@ -25,7 +29,9 @@ import { JwtStrategy } from '../shared/guards/jwt.strategy';
     ForgotPasswordUseCase,
     VerifyOtpUseCase,
     ResetPasswordUseCase,
+    ActivateAccountUseCase,
     JwtStrategy,
+    MailService,
     {
       provide: USER_REPOSITORY,
       useClass: UserRepositoryImpl,

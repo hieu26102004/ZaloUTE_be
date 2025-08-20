@@ -1,12 +1,26 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { RegisterUserUseCase } from '../application/use-cases/register-user.usecase';
 import { LoginUseCase } from '../application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from '../application/use-cases/forgot-password.usecase';
 import { VerifyOtpUseCase } from '../application/use-cases/verify-otp.usecase';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password.usecase';
-import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyOtpDto } from '../application/dto/user.dto';
+import {
+  ActivateAccountDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  VerifyOtpDto,
+} from '../application/dto/user.dto';
+import { ActivateAccountUseCase } from '../application/use-cases/active-account.usecase';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -18,6 +32,7 @@ export class UserController {
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly verifyOtpUseCase: VerifyOtpUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly activateAccountUseCase: ActivateAccountUseCase,
   ) {}
 
   @Post('register')
@@ -25,7 +40,19 @@ export class UserController {
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   async register(@Body() dto: RegisterDto) {
-    return this.registerUserUseCase.execute(dto.username, dto.email, dto.password);
+    return this.registerUserUseCase.execute(
+      dto.username,
+      dto.email,
+      dto.password,
+    );
+  }
+
+  @Post('activate-account')
+  @ApiOperation({ summary: 'Activate user account' })
+  @ApiBody({ type: ActivateAccountDto })
+  @ApiResponse({ status: 200, description: 'Account activated successfully' })
+  async activateAccount(@Body() dto: ActivateAccountDto) {
+    return this.activateAccountUseCase.execute(dto.email, dto.otp);
   }
 
   @Post('login')
@@ -60,6 +87,10 @@ export class UserController {
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.resetPasswordUseCase.execute(dto.email, dto.otp, dto.newPassword);
+    return this.resetPasswordUseCase.execute(
+      dto.email,
+      dto.otp,
+      dto.newPassword,
+    );
   }
 }

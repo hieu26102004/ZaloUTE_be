@@ -8,18 +8,20 @@ import type { UserEntity } from '../../domain/entities/user.entity';
 @Injectable()
 export class RegisterUserUseCase {
   constructor(
-  @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
-  @Inject(PASSWORD_HASHER) private readonly passwordHasher: PasswordHasher,
+    @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
+    @Inject(PASSWORD_HASHER) private readonly passwordHasher: PasswordHasher,
   ) {}
 
-  async execute(username: string, email: string, password: string): Promise<UserEntity> {
+  async execute(
+    username: string,
+    email: string,
+    password: string,
+  ): Promise<Partial<UserEntity>> {
     const hashedPassword = await this.passwordHasher.hash(password);
     return this.userRepository.createUser({
       username,
       email,
       password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
   }
 }
