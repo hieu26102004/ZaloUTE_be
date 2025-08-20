@@ -14,13 +14,11 @@ import { Model } from 'mongoose';
 import type { UserRepository } from '../domain/repositories/user.repository';
 import type { UserEntity } from '../domain/entities/user.entity';
 import { User } from './user.schema';
-import { MailService } from 'src/shared/infrastructure/mail.service';
 
 @Injectable()
 export class UserRepositoryImpl implements UserRepository {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly mailService: MailService,
   ) {}
 
   async activateUser(email: String, otp: String): Promise<Partial<UserEntity>> {
@@ -54,14 +52,6 @@ export class UserRepositoryImpl implements UserRepository {
       otp: otp,
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // OTP valid for 10 minutes
     });
-
-    await this.mailService.sendMail(
-      user.email,
-      'Account Activation',
-      `Your OTP code is: ${otp}`,
-      `<p>Your OTP code is: <strong>${otp}</strong></p>`,
-    );
-
     const doc = created.toObject ? created.toObject() : created;
     const d = doc as unknown as UserDoc;
     return {
@@ -75,6 +65,23 @@ export class UserRepositoryImpl implements UserRepository {
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     const found = await this.userModel.findOne({ email }).exec();
+    if (!found) return null;
+    const doc = found.toObject ? found.toObject() : found;
+    const d = doc as unknown as UserDoc;
+    return {
+      id: d._id?.toString?.() ?? String(d._id),
+      username: d.username,
+      email: d.email,
+      password: d.password,
+      otp: d.otp,
+      otpExpiresAt: d.otpExpiresAt,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+    };
+  }
+  
+  async findByUsername(username: string): Promise<UserEntity | null> {
+    const found = await this.userModel.findOne({ username }).exec();
     if (!found) return null;
     const doc = found.toObject ? found.toObject() : found;
     const d = doc as unknown as UserDoc;

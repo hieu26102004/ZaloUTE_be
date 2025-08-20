@@ -10,7 +10,6 @@ import {
 import { RegisterUserUseCase } from '../application/use-cases/register-user.usecase';
 import { LoginUseCase } from '../application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from '../application/use-cases/forgot-password.usecase';
-import { VerifyOtpUseCase } from '../application/use-cases/verify-otp.usecase';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password.usecase';
 import {
   ActivateAccountDto,
@@ -30,7 +29,6 @@ export class UserController {
     private readonly registerUserUseCase: RegisterUserUseCase,
     private readonly loginUseCase: LoginUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
-    private readonly verifyOtpUseCase: VerifyOtpUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly activateAccountUseCase: ActivateAccountUseCase,
   ) {}
@@ -70,15 +68,6 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'OTP sent to email' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.forgotPasswordUseCase.execute(dto.email);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('verify-otp')
-  @ApiOperation({ summary: 'Verify OTP' })
-  @ApiBody({ type: VerifyOtpDto })
-  @ApiResponse({ status: 200, description: 'OTP verified successfully' })
-  async verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.verifyOtpUseCase.execute(dto.email, dto.otp);
   }
 
   @UseGuards(JwtAuthGuard)
