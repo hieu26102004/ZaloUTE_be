@@ -1,3 +1,4 @@
+
 # ZaloUTE Backend
 
 ## Yêu cầu hệ thống
@@ -7,51 +8,51 @@
 
 ## Cài đặt và chạy bằng Docker
 
-1. **Khởi động PostgreSQL bằng Docker Compose:**
-   ```sh
-   docker-compose up -d
-   ```
-   - PostgreSQL sẽ chạy ở cổng `5477` trên máy chủ.
-   - Thông tin kết nối:
-     - Host: `localhost`
-     - Port: `5477`
-     - Database: `ZaloUTE_DB`
-     - User: `postgres`
-     - Password: `postgres`
+1. **Khởi động MongoDB bằng Docker Compose:**
+    ```sh
+    docker-compose up -d
+    ```
+    - MongoDB sẽ chạy ở cổng `27017` trên máy chủ.
+    - Thông tin kết nối:
+       - Host: `localhost`
+       - Port: `27017`
+       - Database: `zalo_ute`
+       - User: `root`
+       - Password: `example`
 
 2. **Cài đặt dependencies:**
-   ```sh
-   yarn install
-   # hoặc
-   npm install
-   ```
+    ```sh
+    yarn install
+    # hoặc
+    npm install
+    ```
 
-3. **Chạy migration cho database:**
-   ```sh
-   npx prisma migrate deploy
-   ```
+3. **Cấu hình biến môi trường:**
+    - Tạo file `.env` (nếu chưa có) và thêm dòng sau:
+       ```env
+       MONGO_URI="mongodb://root:example@localhost:27017/zalo_ute?authSource=admin"
+       ```
 
 4. **Khởi động server:**
-   ```sh
-   yarn start:dev
-   # hoặc
-   npm run start:dev
-   ```
+    ```sh
+    yarn start:dev
+    # hoặc
+    npm run start:dev
+    ```
 
 ## Cấu trúc thư mục chính
 - `src/` - Mã nguồn backend (NestJS)
-- `prisma/` - Cấu hình và migration cho Prisma ORM
-- `docker-compose.yml` - Cấu hình dịch vụ PostgreSQL
+- `docker-compose.yml` - Cấu hình dịch vụ MongoDB
 
 ## Một số lệnh hữu ích
 - Dừng dịch vụ Docker:
-  ```sh
-  docker-compose down
-  ```
-- Xem log PostgreSQL:
-  ```sh
-  docker logs zalo_ute_postgres
-  ```
+   ```sh
+   docker-compose down
+   ```
+- Xem log MongoDB:
+   ```sh
+   docker logs zalo_ute_mongo
+   ```
 
 ## Liên hệ
 - Liên hệ nhóm phát triển để được hỗ trợ thêm.
