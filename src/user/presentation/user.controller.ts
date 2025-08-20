@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import {
   ApiTags,
@@ -66,7 +66,9 @@ export class UserController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   async login(@Body() dto: LoginDto) {
-    return this.loginUseCase.execute(dto.email, dto.password);
+    const result = await this.loginUseCase.execute(dto.identifier, dto.password);
+    if (!result) throw new UnauthorizedException('Invalid credentials');
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

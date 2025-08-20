@@ -17,6 +17,8 @@ import { ActivateAccountUseCase } from './application/use-cases/active-account.u
 import { ResendOtpUseCase } from './application/use-cases/resend-otp.usecase';
 import { MailService as MailServiceImpl } from 'src/shared/infrastructure/mail.service';
 import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
+import { JwtService as JwtServiceImpl } from 'src/shared/infrastructure/jwt.service';
+import { JWT_SERVICE } from 'src/shared/interfaces/jwt-service.token';
 
 @Module({
   imports: [
@@ -34,6 +36,10 @@ import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
     {
       provide: MAIL_SERVICE,
       useClass: MailServiceImpl,
+    },
+    {
+      provide: JWT_SERVICE,
+      useClass: JwtServiceImpl,
     },
     {
       provide: USER_REPOSITORY,

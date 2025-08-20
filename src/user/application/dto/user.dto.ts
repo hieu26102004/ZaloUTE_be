@@ -16,10 +16,10 @@ export class RegisterDto {
 
 export class LoginDto {
   @ApiProperty({
-    example: 'user@example.com',
-    description: 'User email address',
+    example: 'user@example.com or username123',
+    description: 'User email address or username)',
   })
-  email: string;
+  identifier: string;
 
   @ApiProperty({ example: 'strongPassword123', description: 'User password' })
   password: string;
