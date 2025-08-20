@@ -6,7 +6,9 @@ import { LoginUseCase } from './application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.usecase';
 import { VerifyOtpUseCase } from './application/use-cases/verify-otp.usecase';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.usecase';
-import { PrismaService } from '../shared/prisma.service';
+
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from './infrastructure/user.schema';
 
 import { BcryptPasswordHasher } from './infrastructure/bcrypt-password.hasher';
 import { UserRepositoryImpl } from './infrastructure/user.repository.impl';
@@ -15,6 +17,7 @@ import { PASSWORD_HASHER } from './domain/repositories/password-hasher.token';
 import { JwtStrategy } from '../shared/guards/jwt.strategy';
 
 @Module({
+  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
   controllers: [UserController],
   providers: [
     RegisterUserUseCase,
@@ -22,8 +25,7 @@ import { JwtStrategy } from '../shared/guards/jwt.strategy';
     ForgotPasswordUseCase,
     VerifyOtpUseCase,
     ResetPasswordUseCase,
-  PrismaService,
-  JwtStrategy,
+    JwtStrategy,
     {
       provide: USER_REPOSITORY,
       useClass: UserRepositoryImpl,

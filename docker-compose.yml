@@ -1,15 +1,15 @@
 version: '3.8'
 services:
-  postgres:
-    image: postgres:latest
-    container_name: zalo_ute_postgres
+  mongo:
+    image: mongo:latest
+    container_name: zalo_ute_mongo
     environment:
-      POSTGRES_DB: ZaloUTE_DB
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MONGO_INITDB_DATABASE: zalo_ute
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     ports:
-      - "5477:5432"
+      - "27017:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db
 volumes:
-  postgres_data:
+  mongo_data:
