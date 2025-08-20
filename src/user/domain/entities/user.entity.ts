@@ -3,6 +3,7 @@ export class UserEntity {
   username: string;
   email: string;
   password: string;
+  isActive: boolean;
   otp?: string;
   otpExpiresAt?: Date;
   createdAt: Date;

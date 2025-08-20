@@ -11,13 +11,13 @@ import { RegisterUserUseCase } from '../application/use-cases/register-user.usec
 import { LoginUseCase } from '../application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from '../application/use-cases/forgot-password.usecase';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password.usecase';
+import { ResendOtpUseCase } from '../application/use-cases/resend-otp.usecase';
 import {
   ActivateAccountDto,
   ForgotPasswordDto,
   LoginDto,
   RegisterDto,
   ResetPasswordDto,
-  VerifyOtpDto,
 } from '../application/dto/user.dto';
 import { ActivateAccountUseCase } from '../application/use-cases/active-account.usecase';
 
@@ -31,7 +31,15 @@ export class UserController {
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly activateAccountUseCase: ActivateAccountUseCase,
+    private readonly resendOtpUseCase: ResendOtpUseCase,
   ) {}
+  @Post('resend-otp')
+  @ApiOperation({ summary: 'Resend OTP for account activation' })
+  @ApiBody({ schema: { properties: { email: { type: 'string', example: 'user@example.com' } } } })
+  @ApiResponse({ status: 200, description: 'OTP resent successfully' })
+  async resendOtp(@Body('email') email: string) {
+    return this.resendOtpUseCase.execute(email);
+  }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })

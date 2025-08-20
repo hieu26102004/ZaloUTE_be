@@ -8,7 +8,7 @@ import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
 export class ForgotPasswordUseCase {
   constructor(
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
-  @Inject(MAIL_SERVICE) private readonly mailService: MailService,
+    @Inject(MAIL_SERVICE) private readonly mailService: MailService,
   ) {}
 
   async execute(email: string): Promise<void> {

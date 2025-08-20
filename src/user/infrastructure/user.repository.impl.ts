@@ -3,6 +3,7 @@ interface UserDoc {
   username: string;
   email: string;
   password: string;
+  isActive: boolean;
   otp?: string;
   otpExpiresAt?: Date;
   createdAt: Date;
@@ -32,6 +33,7 @@ export class UserRepositoryImpl implements UserRepository {
       id: user._id?.toString?.() ?? String(user._id),
       username: user.username,
       email: user.email,
+      isActive: true,
     };
   }
 
@@ -58,6 +60,7 @@ export class UserRepositoryImpl implements UserRepository {
       id: d._id?.toString?.() ?? String(d._id),
       username: d.username,
       email: d.email,
+      isActive: d.isActive,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
     };
@@ -67,29 +70,31 @@ export class UserRepositoryImpl implements UserRepository {
     const found = await this.userModel.findOne({ email }).exec();
     if (!found) return null;
     const doc = found.toObject ? found.toObject() : found;
-    const d = doc as unknown as UserDoc;
+    const d = doc as unknown as UserDoc & { isActive: boolean };
     return {
       id: d._id?.toString?.() ?? String(d._id),
       username: d.username,
       email: d.email,
       password: d.password,
+      isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
     };
   }
-  
+
   async findByUsername(username: string): Promise<UserEntity | null> {
     const found = await this.userModel.findOne({ username }).exec();
     if (!found) return null;
     const doc = found.toObject ? found.toObject() : found;
-    const d = doc as unknown as UserDoc;
+    const d = doc as unknown as UserDoc & { isActive: boolean };
     return {
       id: d._id?.toString?.() ?? String(d._id),
       username: d.username,
       email: d.email,
       password: d.password,
+      isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
       createdAt: d.createdAt,
@@ -103,12 +108,13 @@ export class UserRepositoryImpl implements UserRepository {
       .exec();
     if (!updated) throw new Error('User not found');
     const doc = updated.toObject ? updated.toObject() : updated;
-    const d = doc as unknown as UserDoc;
+    const d = doc as unknown as UserDoc & { isActive: boolean };
     return {
       id: d._id?.toString?.() ?? String(d._id),
       username: d.username,
       email: d.email,
       password: d.password,
+      isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
       createdAt: d.createdAt,

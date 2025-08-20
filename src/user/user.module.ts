@@ -14,6 +14,7 @@ import { USER_REPOSITORY } from './domain/repositories/user-repository.token';
 import { PASSWORD_HASHER } from './domain/repositories/password-hasher.token';
 import { JwtStrategy } from '../shared/guards/jwt.strategy';
 import { ActivateAccountUseCase } from './application/use-cases/active-account.usecase';
+import { ResendOtpUseCase } from './application/use-cases/resend-otp.usecase';
 import { MailService as MailServiceImpl } from 'src/shared/infrastructure/mail.service';
 import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
 
@@ -28,6 +29,7 @@ import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
     ForgotPasswordUseCase,
     ResetPasswordUseCase,
     ActivateAccountUseCase,
+    ResendOtpUseCase,
     JwtStrategy,
     {
       provide: MAIL_SERVICE,
