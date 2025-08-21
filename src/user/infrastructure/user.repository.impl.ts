@@ -3,6 +3,9 @@ interface UserDoc {
   username: string;
   email: string;
   password: string;
+  firstname: string;
+  lastname: string;
+  phone: string;
   isActive: boolean;
   otp?: string;
   otpExpiresAt?: Date;
@@ -50,6 +53,9 @@ export class UserRepositoryImpl implements UserRepository {
       username: user.username,
       email: user.email,
       password: user.password,
+      firstname: user.firstname || '',
+      lastname: user.lastname || '',
+      phone: user.phone || '',
       isActive: false,
       otp: otp,
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // OTP valid for 10 minutes
@@ -76,6 +82,9 @@ export class UserRepositoryImpl implements UserRepository {
       username: d.username,
       email: d.email,
       password: d.password,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      phone: d.phone,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
@@ -94,6 +103,9 @@ export class UserRepositoryImpl implements UserRepository {
       username: d.username,
       email: d.email,
       password: d.password,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      phone: d.phone,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
@@ -114,6 +126,9 @@ export class UserRepositoryImpl implements UserRepository {
       username: d.username,
       email: d.email,
       password: d.password,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      phone: d.phone,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,

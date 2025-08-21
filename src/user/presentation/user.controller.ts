@@ -1,4 +1,10 @@
-import { Body, Controller, Post, UseGuards, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import {
   ApiTags,
@@ -12,12 +18,14 @@ import { LoginUseCase } from '../application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from '../application/use-cases/forgot-password.usecase';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password.usecase';
 import { ResendOtpUseCase } from '../application/use-cases/resend-otp.usecase';
+import { ValidateEmailUseCase } from '../application/use-cases/validate-email.usecase';
 import {
   ActivateAccountDto,
   ForgotPasswordDto,
   LoginDto,
   RegisterDto,
   ResetPasswordDto,
+  ValidateEmailDto,
 } from '../application/dto/user.dto';
 import { ActivateAccountUseCase } from '../application/use-cases/active-account.usecase';
 
@@ -32,13 +40,26 @@ export class UserController {
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly activateAccountUseCase: ActivateAccountUseCase,
     private readonly resendOtpUseCase: ResendOtpUseCase,
+    private readonly validateEmailUseCase: ValidateEmailUseCase,
   ) {}
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP for account activation' })
-  @ApiBody({ schema: { properties: { email: { type: 'string', example: 'user@example.com' } } } })
+  @ApiBody({
+    schema: {
+      properties: { email: { type: 'string', example: 'user@example.com' } },
+    },
+  })
   @ApiResponse({ status: 200, description: 'OTP resent successfully' })
   async resendOtp(@Body('email') email: string) {
     return this.resendOtpUseCase.execute(email);
+  }
+
+  @Post('validate-email')
+  @ApiOperation({ summary: 'Validate user email' })
+  @ApiBody({ type: ValidateEmailDto })
+  @ApiResponse({ status: 200, description: 'Email validated successfully' })
+  async validateEmail(@Body() dto: ValidateEmailDto) {
+    return this.validateEmailUseCase.execute(dto.email);
   }
 
   @Post('register')
@@ -50,6 +71,9 @@ export class UserController {
       dto.username,
       dto.email,
       dto.password,
+      dto.firstname,
+      dto.lastname,
+      dto.phone,
     );
   }
 
@@ -66,7 +90,10 @@ export class UserController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   async login(@Body() dto: LoginDto) {
-    const result = await this.loginUseCase.execute(dto.identifier, dto.password);
+    const result = await this.loginUseCase.execute(
+      dto.identifier,
+      dto.password,
+    );
     if (!result) throw new UnauthorizedException('Invalid credentials');
     return result;
   }

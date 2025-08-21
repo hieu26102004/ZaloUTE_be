@@ -15,6 +15,15 @@ export class User extends Document {
   @Prop({ required: true })
   isActive: boolean;
 
+  @Prop({ required: true })
+  firstname: string;
+
+  @Prop({ required: true })
+  lastname: string;
+
+  @Prop({ required: true, unique: true })
+  phone: string;
+
   @Prop()
   otp?: string;
 

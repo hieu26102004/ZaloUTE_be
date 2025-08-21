@@ -8,8 +8,8 @@ export class ActivateAccountUseCase {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(email: string, otp: string): Promise<String> {
+  async execute(email: string, otp: string): Promise<Object> {
     await this.userRepository.activateUser(email, otp);
-    return 'Account activated successfully';
+    return { success: true, message: 'Account activated successfully' };
   }
 }

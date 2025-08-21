@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import e from 'express';
 
 export class RegisterDto {
   @ApiProperty({ example: 'username123', description: 'User username' })
@@ -12,6 +13,23 @@ export class RegisterDto {
 
   @ApiProperty({ example: 'strongPassword123', description: 'User password' })
   password: string;
+
+  @ApiProperty({ example: 'John', description: 'User first name' })
+  firstname: string;
+
+  @ApiProperty({ example: 'Doe', description: 'User last name' })
+  lastname: string;
+
+  @ApiProperty({ example: '1234567890', description: 'User phone number' })
+  phone: string;
+}
+
+export class ValidateEmailDto {
+  @ApiProperty({
+    example: 'user@example.com',
+    description: 'User email address',
+  })
+  email: string;
 }
 
 export class LoginDto {

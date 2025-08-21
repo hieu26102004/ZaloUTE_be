@@ -4,6 +4,7 @@ import { RegisterUserUseCase } from './application/use-cases/register-user.useca
 import { LoginUseCase } from './application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.usecase';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.usecase';
+import { ValidateEmailUseCase } from './application/use-cases/validate-email.usecase';
 
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './infrastructure/user.schema';
@@ -32,6 +33,7 @@ import { JWT_SERVICE } from 'src/shared/interfaces/jwt-service.token';
     ResetPasswordUseCase,
     ActivateAccountUseCase,
     ResendOtpUseCase,
+    ValidateEmailUseCase,
     JwtStrategy,
     {
       provide: MAIL_SERVICE,

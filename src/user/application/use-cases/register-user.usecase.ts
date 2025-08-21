@@ -19,11 +19,16 @@ export class RegisterUserUseCase {
     username: string,
     email: string,
     password: string,
+    firstname: string,
+    lastname: string,
+    phone: string,
   ): Promise<Partial<UserEntity>> {
     const existedEmail = await this.userRepository.findByEmail(email);
     if (existedEmail) throw new Error('Email already exists');
 
-    const existedUsername = await (this.userRepository as any).findByUsername(username);
+    const existedUsername = await (this.userRepository as any).findByUsername(
+      username,
+    );
     if (existedUsername) throw new Error('Username already exists');
 
     const hashedPassword = await this.passwordHasher.hash(password);
@@ -33,6 +38,9 @@ export class RegisterUserUseCase {
       username,
       email,
       password: hashedPassword,
+      firstname,
+      lastname,
+      phone,
       otp,
       otpExpiresAt,
     });
