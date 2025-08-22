@@ -5,7 +5,7 @@ import { PASSWORD_HASHER } from '../../domain/repositories/password-hasher.token
 import type { PasswordHasher } from '../../domain/repositories/password-hasher';
 import type { UserEntity } from '../../domain/entities/user.entity';
 import { JWT_SERVICE } from 'src/shared/interfaces/jwt-service.token';
-import { JwtService } from 'src/shared/infrastructure/jwt.service';
+import type { JwtService } from 'src/shared/interfaces/jwt.service';
 
 @Injectable()
 export class LoginUseCase {

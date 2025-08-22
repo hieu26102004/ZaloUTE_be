@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { UserRepository } from '../../domain/repositories/user.repository';
-import { MailService } from '../../../shared/infrastructure/mail.service';
+import type { MailService } from 'src/shared/interfaces/mail.service';
 import { USER_REPOSITORY } from 'src/user/domain/repositories/user-repository.token';
 import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
 
