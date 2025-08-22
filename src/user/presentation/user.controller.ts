@@ -19,6 +19,7 @@ import { ForgotPasswordUseCase } from '../application/use-cases/forgot-password.
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password.usecase';
 import { ResendOtpUseCase } from '../application/use-cases/resend-otp.usecase';
 import { ValidateEmailUseCase } from '../application/use-cases/validate-email.usecase';
+import { VerifyForgotPasswordOtpUseCase } from '../application/use-cases/verify-forgot-password-otp.usecase';
 import {
   ActivateAccountDto,
   ForgotPasswordDto,
@@ -27,6 +28,8 @@ import {
   ResetPasswordDto,
   ValidateEmailDto,
 } from '../application/dto/user.dto';
+// ...existing code...
+import { VerifyForgotPasswordOtpDto } from '../application/dto/user.dto';
 import { ActivateAccountUseCase } from '../application/use-cases/active-account.usecase';
 
 @ApiTags('User')
@@ -40,7 +43,8 @@ export class UserController {
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly activateAccountUseCase: ActivateAccountUseCase,
     private readonly resendOtpUseCase: ResendOtpUseCase,
-    private readonly validateEmailUseCase: ValidateEmailUseCase,
+  private readonly validateEmailUseCase: ValidateEmailUseCase,
+  private readonly verifyForgotPasswordOtpUseCase: VerifyForgotPasswordOtpUseCase,
   ) {}
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP for account activation' })
@@ -98,7 +102,6 @@ export class UserController {
     return result;
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('forgot-password')
   @ApiOperation({ summary: 'Send forgot password OTP' })
   @ApiBody({ type: ForgotPasswordDto })
@@ -107,12 +110,19 @@ export class UserController {
     return this.forgotPasswordUseCase.execute(dto.email);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('reset-password')
+  @Post('forgot-password/verify-otp')
+  @ApiOperation({ summary: 'Verify forgot password OTP' })
+  @ApiBody({ type: VerifyForgotPasswordOtpDto })
+  @ApiResponse({ status: 200, description: 'OTP verified successfully' })
+  async verifyForgotPasswordOtp(@Body() dto: VerifyForgotPasswordOtpDto) {
+  return this.verifyForgotPasswordOtpUseCase.execute(dto.email, dto.otp);
+  }
+
+  @Post('forgot-password/reset')
   @ApiOperation({ summary: 'Reset password' })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
+  async resetForgotPassword(@Body() dto: ResetPasswordDto) {
     return this.resetPasswordUseCase.execute(
       dto.email,
       dto.otp,

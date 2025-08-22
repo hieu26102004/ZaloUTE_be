@@ -14,7 +14,7 @@ export class ResetPasswordUseCase {
     private readonly passwordHasher: PasswordHasher,
   ) {}
 
-  async execute(email: string, otp: string, newPassword: string): Promise<boolean> {
+  async execute(email: string, otp: string, newPassword: string): Promise<Object> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) throw new Error('User not found');
     if (!user.otp || !user.otpExpiresAt) throw new Error('No OTP requested');
@@ -27,6 +27,6 @@ export class ResetPasswordUseCase {
       otp: undefined,
       otpExpiresAt: undefined,
     });
-    return true;
+    return { success: true, message: 'Account activated successfully' };
   }
 }

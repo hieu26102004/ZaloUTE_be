@@ -20,6 +20,7 @@ import { MailService as MailServiceImpl } from 'src/shared/infrastructure/mail.s
 import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
 import { JwtService as JwtServiceImpl } from 'src/shared/infrastructure/jwt.service';
 import { JWT_SERVICE } from 'src/shared/interfaces/jwt-service.token';
+import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-forgot-password-otp.usecase';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { JWT_SERVICE } from 'src/shared/interfaces/jwt-service.token';
     ResendOtpUseCase,
     ValidateEmailUseCase,
     JwtStrategy,
+    VerifyForgotPasswordOtpUseCase,
     {
       provide: MAIL_SERVICE,
       useClass: MailServiceImpl,
