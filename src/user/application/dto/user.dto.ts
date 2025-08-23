@@ -102,3 +102,32 @@ export class VerifyForgotPasswordOtpDto {
   })
   otp: string;
 }
+
+export class UserProfileDto {
+  @ApiProperty({ example: '60d5ec49f0d2c84d8c8e1a5b', description: 'User ID' })
+  id: string;
+
+  @ApiProperty({ example: 'username123', description: 'Username' })
+  username: string;
+
+  @ApiProperty({ example: 'user@example.com', description: 'Email address' })
+  email: string;
+
+  @ApiProperty({ example: 'John', description: 'First name' })
+  firstname: string;
+
+  @ApiProperty({ example: 'Doe', description: 'Last name' })
+  lastname: string;
+
+  @ApiProperty({ example: '1234567890', description: 'Phone number' })
+  phone: string;
+
+  @ApiProperty({ example: true, description: 'Account active status' })
+  isActive: boolean;
+
+  @ApiProperty({ example: '2023-01-01T00:00:00Z', description: 'Created at' })
+  createdAt: Date;
+
+  @ApiProperty({ example: '2023-01-01T00:00:00Z', description: 'Updated at' })
+  updatedAt: Date;
+}

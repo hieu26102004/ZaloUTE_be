@@ -5,6 +5,7 @@ import { LoginUseCase } from './application/use-cases/login.usecase';
 import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.usecase';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.usecase';
 import { ValidateEmailUseCase } from './application/use-cases/validate-email.usecase';
+import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.usecase';
 
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './infrastructure/user.schema';
@@ -35,6 +36,7 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
     ActivateAccountUseCase,
     ResendOtpUseCase,
     ValidateEmailUseCase,
+    GetUserProfileUseCase,
     JwtStrategy,
     VerifyForgotPasswordOtpUseCase,
     {

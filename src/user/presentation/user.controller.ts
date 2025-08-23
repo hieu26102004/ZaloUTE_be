@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Post,
+  Get,
   UseGuards,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -20,6 +22,7 @@ import { ResetPasswordUseCase } from '../application/use-cases/reset-password.us
 import { ResendOtpUseCase } from '../application/use-cases/resend-otp.usecase';
 import { ValidateEmailUseCase } from '../application/use-cases/validate-email.usecase';
 import { VerifyForgotPasswordOtpUseCase } from '../application/use-cases/verify-forgot-password-otp.usecase';
+import { GetUserProfileUseCase } from '../application/use-cases/get-user-profile.usecase';
 import {
   ActivateAccountDto,
   ForgotPasswordDto,
@@ -27,6 +30,7 @@ import {
   RegisterDto,
   ResetPasswordDto,
   ValidateEmailDto,
+  UserProfileDto,
 } from '../application/dto/user.dto';
 // ...existing code...
 import { VerifyForgotPasswordOtpDto } from '../application/dto/user.dto';
@@ -43,8 +47,9 @@ export class UserController {
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly activateAccountUseCase: ActivateAccountUseCase,
     private readonly resendOtpUseCase: ResendOtpUseCase,
-  private readonly validateEmailUseCase: ValidateEmailUseCase,
-  private readonly verifyForgotPasswordOtpUseCase: VerifyForgotPasswordOtpUseCase,
+    private readonly validateEmailUseCase: ValidateEmailUseCase,
+    private readonly verifyForgotPasswordOtpUseCase: VerifyForgotPasswordOtpUseCase,
+    private readonly getUserProfileUseCase: GetUserProfileUseCase,
   ) {}
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP for account activation' })
@@ -115,7 +120,7 @@ export class UserController {
   @ApiBody({ type: VerifyForgotPasswordOtpDto })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   async verifyForgotPasswordOtp(@Body() dto: VerifyForgotPasswordOtpDto) {
-  return this.verifyForgotPasswordOtpUseCase.execute(dto.email, dto.otp);
+    return this.verifyForgotPasswordOtpUseCase.execute(dto.email, dto.otp);
   }
 
   @Post('forgot-password/reset')
@@ -128,5 +133,17 @@ export class UserController {
       dto.otp,
       dto.newPassword,
     );
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: UserProfileDto,
+  })
+  async getProfile(@CurrentUser() user: { userId: string }) {
+    return this.getUserProfileUseCase.execute(user.userId);
   }
 }
