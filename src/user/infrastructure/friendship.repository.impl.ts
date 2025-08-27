@@ -35,12 +35,36 @@ export class FriendshipRepositoryImpl implements FriendshipRepository {
     const friendship = await this.friendshipModel.findOne({
       $or: [
         {
-          requesterId: new Types.ObjectId(requesterId),
-          receiverId: new Types.ObjectId(receiverId),
+          $and: [
+            {
+              $or: [
+                { requesterId: new Types.ObjectId(requesterId) },
+                { requesterId: requesterId },
+              ],
+            },
+            {
+              $or: [
+                { receiverId: new Types.ObjectId(receiverId) },
+                { receiverId: receiverId },
+              ],
+            },
+          ],
         },
         {
-          requesterId: new Types.ObjectId(receiverId),
-          receiverId: new Types.ObjectId(requesterId),
+          $and: [
+            {
+              $or: [
+                { requesterId: new Types.ObjectId(receiverId) },
+                { requesterId: receiverId },
+              ],
+            },
+            {
+              $or: [
+                { receiverId: new Types.ObjectId(requesterId) },
+                { receiverId: requesterId },
+              ],
+            },
+          ],
         },
       ],
     });
@@ -53,8 +77,18 @@ export class FriendshipRepositoryImpl implements FriendshipRepository {
   ): Promise<FriendshipEntity[]> {
     const friendships = await this.friendshipModel.find({
       $or: [
-        { requesterId: new Types.ObjectId(userId) },
-        { receiverId: new Types.ObjectId(userId) },
+        {
+          $or: [
+            { requesterId: new Types.ObjectId(userId) },
+            { requesterId: userId },
+          ],
+        },
+        {
+          $or: [
+            { receiverId: new Types.ObjectId(userId) },
+            { receiverId: userId },
+          ],
+        },
       ],
       status,
     });
@@ -65,10 +99,71 @@ export class FriendshipRepositoryImpl implements FriendshipRepository {
     userId: string,
   ): Promise<FriendshipEntity[]> {
     const friendships = await this.friendshipModel.find({
-      receiverId: new Types.ObjectId(userId),
+      $or: [{ receiverId: new Types.ObjectId(userId) }, { receiverId: userId }],
       status: FriendshipStatus.PENDING,
     });
     return friendships.map((friendship) => this.mapToEntity(friendship));
+  }
+
+  async getPendingRequestsWithUserInfo(userId: string): Promise<any[]> {
+    const pendingRequests = await this.friendshipModel.aggregate([
+      {
+        $match: {
+          $or: [
+            { receiverId: new Types.ObjectId(userId) },
+            { receiverId: userId },
+          ],
+          status: FriendshipStatus.PENDING,
+        },
+      },
+      {
+        $addFields: {
+          requesterObjectId: {
+            $cond: {
+              if: { $type: '$requesterId' },
+              then: {
+                $cond: {
+                  if: { $eq: [{ $type: '$requesterId' }, 'objectId'] },
+                  then: '$requesterId',
+                  else: { $toObjectId: '$requesterId' },
+                },
+              },
+              else: { $toObjectId: '$requesterId' },
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'requesterObjectId',
+          foreignField: '_id',
+          as: 'requester',
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          requester: { $arrayElemAt: ['$requester', 0] },
+          createdAt: 1,
+          status: 1,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          'requester._id': 1,
+          'requester.username': 1,
+          'requester.email': 1,
+          'requester.firstname': 1,
+          'requester.lastname': 1,
+          createdAt: 1,
+          status: 1,
+        },
+      },
+    ]);
+
+    return pendingRequests;
   }
 
   async updateStatus(
@@ -94,15 +189,35 @@ export class FriendshipRepositoryImpl implements FriendshipRepository {
         $match: {
           $or: [
             { requesterId: new Types.ObjectId(userId) },
+            { requesterId: userId },
             { receiverId: new Types.ObjectId(userId) },
+            { receiverId: userId },
           ],
           status: FriendshipStatus.ACCEPTED,
         },
       },
       {
+        $addFields: {
+          requesterObjectId: {
+            $cond: {
+              if: { $eq: [{ $type: '$requesterId' }, 'objectId'] },
+              then: '$requesterId',
+              else: { $toObjectId: '$requesterId' },
+            },
+          },
+          receiverObjectId: {
+            $cond: {
+              if: { $eq: [{ $type: '$receiverId' }, 'objectId'] },
+              then: '$receiverId',
+              else: { $toObjectId: '$receiverId' },
+            },
+          },
+        },
+      },
+      {
         $lookup: {
           from: 'users',
-          localField: 'requesterId',
+          localField: 'requesterObjectId',
           foreignField: '_id',
           as: 'requester',
         },
@@ -110,7 +225,7 @@ export class FriendshipRepositoryImpl implements FriendshipRepository {
       {
         $lookup: {
           from: 'users',
-          localField: 'receiverId',
+          localField: 'receiverObjectId',
           foreignField: '_id',
           as: 'receiver',
         },
@@ -119,7 +234,12 @@ export class FriendshipRepositoryImpl implements FriendshipRepository {
         $project: {
           friend: {
             $cond: [
-              { $eq: ['$requesterId', new Types.ObjectId(userId)] },
+              {
+                $or: [
+                  { $eq: ['$requesterId', userId] },
+                  { $eq: ['$requesterId', new Types.ObjectId(userId)] },
+                ],
+              },
               { $arrayElemAt: ['$receiver', 0] },
               { $arrayElemAt: ['$requester', 0] },
             ],

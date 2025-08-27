@@ -17,6 +17,7 @@ export interface FriendshipRepository {
     status: FriendshipStatus,
   ): Promise<FriendshipEntity[]>;
   findPendingRequestsByUserId(userId: string): Promise<FriendshipEntity[]>;
+  getPendingRequestsWithUserInfo(userId: string): Promise<any[]>;
   updateStatus(
     id: string,
     status: FriendshipStatus,

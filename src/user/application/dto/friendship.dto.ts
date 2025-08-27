@@ -41,3 +41,16 @@ export class FriendDto {
   lastname: string;
   friendsSince: Date;
 }
+
+export class PendingFriendRequestDto {
+  friendshipId: string;
+  requester: {
+    id: string;
+    username: string;
+    email: string;
+    firstname: string;
+    lastname: string;
+  };
+  createdAt: Date;
+  status: string;
+}

@@ -35,6 +35,7 @@ import { RespondFriendRequestUseCase } from '../application/use-cases/respond-fr
 import { UnfriendUseCase } from '../application/use-cases/unfriend.usecase';
 import { GetFriendsListUseCase } from '../application/use-cases/get-friends-list.usecase';
 import { GetUserProfileUseCase as ViewFriendProfileUseCase } from '../application/use-cases/view-friend-profile.usecase';
+import { GetPendingFriendRequestsUseCase } from '../application/use-cases/get-pending-friend-requests.usecase';
 import {
   ActivateAccountDto,
   ForgotPasswordDto,
@@ -53,6 +54,7 @@ import {
   RespondFriendRequestDto,
   UserProfileDto as FriendProfileDto,
   FriendDto,
+  PendingFriendRequestDto,
 } from '../application/dto/friendship.dto';
 
 @ApiTags('User')
@@ -76,6 +78,7 @@ export class UserController {
     private readonly unfriendUseCase: UnfriendUseCase,
     private readonly getFriendsListUseCase: GetFriendsListUseCase,
     private readonly viewFriendProfileUseCase: ViewFriendProfileUseCase,
+    private readonly getPendingFriendRequestsUseCase: GetPendingFriendRequestsUseCase,
   ) {}
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP for account activation' })
@@ -240,6 +243,18 @@ export class UserController {
   })
   async getFriendsList(@CurrentUser() user: { userId: string }) {
     return this.getFriendsListUseCase.execute(user.userId);
+  }
+
+  @Get('friends/requests')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get pending friend requests' })
+  @ApiResponse({
+    status: 200,
+    description: 'Pending friend requests retrieved',
+    type: [PendingFriendRequestDto],
+  })
+  async getPendingFriendRequests(@CurrentUser() user: { userId: string }) {
+    return this.getPendingFriendRequestsUseCase.execute(user.userId);
   }
 
   @Get('profile/:userId')

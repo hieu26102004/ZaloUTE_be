@@ -13,6 +13,7 @@ import { RespondFriendRequestUseCase } from './application/use-cases/respond-fri
 import { UnfriendUseCase } from './application/use-cases/unfriend.usecase';
 import { GetFriendsListUseCase } from './application/use-cases/get-friends-list.usecase';
 import { GetUserProfileUseCase as ViewFriendProfileUseCase } from './application/use-cases/view-friend-profile.usecase';
+import { GetPendingFriendRequestsUseCase } from './application/use-cases/get-pending-friend-requests.usecase';
 
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './infrastructure/user.schema';
@@ -62,6 +63,7 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
     UnfriendUseCase,
     GetFriendsListUseCase,
     ViewFriendProfileUseCase,
+    GetPendingFriendRequestsUseCase,
     {
       provide: MAIL_SERVICE,
       useClass: MailServiceImpl,
