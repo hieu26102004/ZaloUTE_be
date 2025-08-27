@@ -1,0 +1,99 @@
+// Friendship API Test Examples
+// Sử dụng với Postman hoặc curl để test các API
+
+// ===== 1. ĐĂNG KÝ VÀ ĐĂNG NHẬP =====
+
+// Đăng ký user 1
+POST http://localhost:3000/user/register
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "email": "user1@example.com",
+  "password": "password123",
+  "firstname": "User",
+  "lastname": "One",
+  "phone": "0123456789"
+}
+
+// Đăng ký user 2  
+POST http://localhost:3000/user/register
+Content-Type: application/json
+
+{
+  "username": "user2",
+  "email": "user2@example.com", 
+  "password": "password123",
+  "firstname": "User",
+  "lastname": "Two",
+  "phone": "0123456790"
+}
+
+// Kích hoạt tài khoản (sử dụng OTP từ email/console)
+POST http://localhost:3000/user/activate-account
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "otp": "123456"
+}
+
+// Đăng nhập user 1
+POST http://localhost:3000/user/login
+Content-Type: application/json
+
+{
+  "identifier": "user1@example.com",
+  "password": "password123"
+}
+
+// Lấy token từ response và sử dụng cho các API tiếp theo
+
+// ===== 2. TÍNH NĂNG BẠN BÈ =====
+
+// Tìm kiếm người dùng bằng email
+GET http://localhost:3000/user/search?email=user2
+Authorization: Bearer YOUR_JWT_TOKEN
+
+// Gửi lời mời kết bạn
+POST http://localhost:3000/user/friends/request
+Authorization: Bearer YOUR_JWT_TOKEN
+Content-Type: application/json
+
+{
+  "receiverId": "USER2_ID_FROM_SEARCH"
+}
+
+// Đăng nhập user 2 để nhận và phản hồi lời mời
+POST http://localhost:3000/user/login
+Content-Type: application/json
+
+{
+  "identifier": "user2@example.com",
+  "password": "password123"
+}
+
+// Phản hồi lời mời kết bạn (chấp nhận)
+POST http://localhost:3000/user/friends/respond
+Authorization: Bearer USER2_JWT_TOKEN
+Content-Type: application/json
+
+{
+  "friendshipId": "FRIENDSHIP_ID",
+  "action": "accept"
+}
+
+// Xem danh sách bạn bè
+GET http://localhost:3000/user/friends
+Authorization: Bearer YOUR_JWT_TOKEN
+
+// Xem hồ sơ bạn bè
+GET http://localhost:3000/user/profile/USER2_ID
+Authorization: Bearer YOUR_JWT_TOKEN
+
+// Huỷ kết bạn
+DELETE http://localhost:3000/user/friends/USER2_ID
+Authorization: Bearer YOUR_JWT_TOKEN
+
+// ===== 3. SWAGGER UI =====
+// Truy cập http://localhost:3000/api để xem tài liệu API đầy đủ

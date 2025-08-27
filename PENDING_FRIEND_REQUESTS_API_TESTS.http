@@ -1,0 +1,26 @@
+### Get pending friend requests
+GET http://localhost:3000/user/friends/requests
+Authorization: Bearer {{jwt_token}}
+
+### Send friend request (for testing)
+POST http://localhost:3000/user/friends/request
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "receiverId": "USER_ID_HERE"
+}
+
+### Respond to friend request
+POST http://localhost:3000/user/friends/respond
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "friendshipId": "FRIENDSHIP_ID_HERE",
+  "action": "accept"
+}
+
+### Get friends list
+GET http://localhost:3000/user/friends
+Authorization: Bearer {{jwt_token}}
