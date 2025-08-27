@@ -3,8 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { setupGlobalInterceptors } from './shared/config/setup-interceptors';
-import { createServer } from 'http';
-import { setupSocket } from './socket';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,12 +18,6 @@ async function bootstrap() {
   setupGlobalInterceptors(app);
   app.enableCors();
 
-  // Tích hợp socket.io
-  const httpServer = createServer(app.getHttpAdapter().getInstance());
-  setupSocket(httpServer);
-
-  await new Promise<void>((resolve) => {
-    httpServer.listen(process.env.PORT ?? 8080, resolve);
-  });
+  await app.listen(process.env.PORT ?? 8080);
 }
 bootstrap();
