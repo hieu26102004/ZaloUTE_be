@@ -157,4 +157,54 @@ export class UserRepositoryImpl implements UserRepository {
       updatedAt: d.updatedAt,
     };
   }
+
+  async searchByEmail(email: string): Promise<UserEntity[]> {
+    const users = await this.userModel
+      .find({
+        email: { $regex: email, $options: 'i' },
+        isActive: true,
+      })
+      .limit(10)
+      .exec();
+
+    return users.map((user) => {
+      const doc = user.toObject ? user.toObject() : user;
+      const d = doc as unknown as UserDoc & { isActive: boolean };
+      return {
+        id: d._id?.toString?.() ?? String(d._id),
+        username: d.username,
+        email: d.email,
+        password: d.password,
+        firstname: d.firstname,
+        lastname: d.lastname,
+        phone: d.phone,
+        isActive: d.isActive,
+        otp: d.otp,
+        otpExpiresAt: d.otpExpiresAt,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      };
+    });
+  }
+
+  async findByPhone(phone: string): Promise<UserEntity | null> {
+    const found = await this.userModel.findOne({ phone }).exec();
+    if (!found) return null;
+    const doc = found.toObject ? found.toObject() : found;
+    const d = doc as unknown as UserDoc & { isActive: boolean };
+    return {
+      id: d._id?.toString?.() ?? String(d._id),
+      username: d.username,
+      email: d.email,
+      password: d.password,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      phone: d.phone,
+      isActive: d.isActive,
+      otp: d.otp,
+      otpExpiresAt: d.otpExpiresAt,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+    };
+  }
 }

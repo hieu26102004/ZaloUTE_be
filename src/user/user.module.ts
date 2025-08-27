@@ -6,14 +6,27 @@ import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.u
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.usecase';
 import { ValidateEmailUseCase } from './application/use-cases/validate-email.usecase';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.usecase';
+// New friendship use cases
+import { SearchUserByEmailUseCase } from './application/use-cases/search-user-by-email.usecase';
+import { SendFriendRequestUseCase } from './application/use-cases/send-friend-request.usecase';
+import { RespondFriendRequestUseCase } from './application/use-cases/respond-friend-request.usecase';
+import { UnfriendUseCase } from './application/use-cases/unfriend.usecase';
+import { GetFriendsListUseCase } from './application/use-cases/get-friends-list.usecase';
+import { GetUserProfileUseCase as ViewFriendProfileUseCase } from './application/use-cases/view-friend-profile.usecase';
 
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './infrastructure/user.schema';
+import {
+  Friendship,
+  FriendshipSchema,
+} from './infrastructure/friendship.schema';
 
 import { BcryptPasswordHasher } from './infrastructure/bcrypt-password.hasher';
 import { UserRepositoryImpl } from './infrastructure/user.repository.impl';
+import { FriendshipRepositoryImpl } from './infrastructure/friendship.repository.impl';
 import { USER_REPOSITORY } from './domain/repositories/user-repository.token';
 import { PASSWORD_HASHER } from './domain/repositories/password-hasher.token';
+import { FRIENDSHIP_REPOSITORY_TOKEN } from './domain/repositories/friendship-repository.token';
 import { JwtStrategy } from '../shared/guards/jwt.strategy';
 import { ActivateAccountUseCase } from './application/use-cases/active-account.usecase';
 import { ResendOtpUseCase } from './application/use-cases/resend-otp.usecase';
@@ -25,7 +38,10 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Friendship.name, schema: FriendshipSchema },
+    ]),
   ],
   controllers: [UserController],
   providers: [
@@ -39,6 +55,13 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
     GetUserProfileUseCase,
     JwtStrategy,
     VerifyForgotPasswordOtpUseCase,
+    // New friendship use cases
+    SearchUserByEmailUseCase,
+    SendFriendRequestUseCase,
+    RespondFriendRequestUseCase,
+    UnfriendUseCase,
+    GetFriendsListUseCase,
+    ViewFriendProfileUseCase,
     {
       provide: MAIL_SERVICE,
       useClass: MailServiceImpl,
@@ -54,6 +77,10 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
     {
       provide: PASSWORD_HASHER,
       useClass: BcryptPasswordHasher,
+    },
+    {
+      provide: FRIENDSHIP_REPOSITORY_TOKEN,
+      useClass: FriendshipRepositoryImpl,
     },
   ],
 })
