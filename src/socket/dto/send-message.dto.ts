@@ -1,12 +1,12 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
 
 export class SendMessageDto {
   @IsOptional()
-  @IsMongoId()
+  @IsString()
   conversationId?: string;
 
   @IsOptional()
-  @IsMongoId()
+  @IsString()
   receiverId?: string;
 
   @IsNotEmpty()

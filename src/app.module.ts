@@ -11,6 +11,8 @@ import { Message, MessageSchema } from './shared/models/message.schema';
 import { Conversation, ConversationSchema } from './shared/models/conversation.schema';
 import { WsJwtGuard } from './socket/ws-jwt.guard';
 import { JwtService } from './shared/infrastructure/jwt.service';
+import { ConversationController } from './shared/controllers/conversation.controller';
+import { MessageController } from './shared/controllers/message.controller';
 
 @Module({
   imports: [
@@ -22,7 +24,7 @@ import { JwtService } from './shared/infrastructure/jwt.service';
     ]),
     UserModule,
   ],
-  controllers: [],
+  controllers: [ConversationController, MessageController],
   providers: [
     ChatGateway,
     MessageService,

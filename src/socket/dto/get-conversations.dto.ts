@@ -1,3 +1,16 @@
+import { IsOptional, IsInt, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+
 export class GetConversationsDto {
-  // Nếu sau này muốn lọc theo type, limit, skip... thì bổ sung ở đây
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  skip?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MessageService } from '../../shared/services/message.service';
 import { ConversationService } from '../../shared/services/conversation.service';
 import { SOCKET_EVENTS } from '../constants';
@@ -6,6 +6,8 @@ import { Types } from 'mongoose';
 
 @Injectable()
 export class MessageSocketHandler {
+  private readonly logger = new Logger(MessageSocketHandler.name);
+
   constructor(
     private readonly messageService: MessageService,
     private readonly conversationService: ConversationService,
@@ -14,28 +16,53 @@ export class MessageSocketHandler {
   async handleSendMessage(socket: any, io: any, data: any) {
     try {
       let conversationId = data.conversationId;
+      
+      // If no conversationId but receiverId provided, find or create private conversation
       if (!conversationId && data.receiverId) {
         const conversation = await this.conversationService.findOrCreatePrivateConversation(
           new Types.ObjectId(socket.data.userId),
           new Types.ObjectId(data.receiverId)
         );
-        conversationId = conversation._id;
+        conversationId = (conversation as any)._id.toString();
+        
+        // Join both users to the conversation room if not already joined
+        const roomName = `conversation_${conversationId}`;
+        socket.join(roomName);
+        
+        // Also join the receiver if they're connected
+        const receiverSockets = await io.in(data.receiverId).fetchSockets();
+        for (const receiverSocket of receiverSockets) {
+          receiverSocket.join(roomName);
+        }
       }
+
+      // Create the message
       const message = await this.messageService.createMessage(
         new Types.ObjectId(conversationId),
         new Types.ObjectId(socket.data.userId),
         data.content,
         data.type || 'text'
       );
-      io.to(data.receiverId).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, message);
-      socket.emit(SOCKET_EVENTS.RECEIVE_MESSAGE, message);
+
+      // Populate sender information
+      const populatedMessage = await this.messageService.getMessageById(new Types.ObjectId((message as any)._id.toString()));
+
+      // Broadcast message to all participants in the conversation room
+      const roomName = `conversation_${conversationId}`;
+      io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
+
+      this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}`);
+      
     } catch (err) {
+      this.logger.error('Send message failed:', err);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Send message failed', error: err.message });
     }
   }
 
   async handleGetMessages(socket: any, data: any) {
     try {
+      this.logger.log(`Getting messages for conversation: ${data.conversationId}`);
+      
       const messages = await this.messageService.getMessages(
         new Types.ObjectId(data.conversationId),
         data.limit || 20,
@@ -43,6 +70,7 @@ export class MessageSocketHandler {
       );
       socket.emit(SOCKET_EVENTS.GET_MESSAGES_RESULT, messages);
     } catch (err) {
+      this.logger.error('Get messages failed:', err);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get messages failed', error: err.message });
     }
   }

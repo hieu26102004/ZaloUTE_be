@@ -5,30 +5,63 @@ import { Socket } from 'socket.io';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
+  private readonly logger = new Logger(WsJwtGuard.name);
+
   constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const client: Socket = context.switchToWs().getClient<Socket>();
-    const token = this.extractToken(client);
-    if (!token) return false;
-    const payload = this.jwtService.verify(token);
-    if (!payload) return false;
-    // Gán userId vào socket để các handler dùng
-    (client as any).data = { userId: payload.sub, email: payload.email };
-    return true;
+    try {
+      const client: Socket = context.switchToWs().getClient<Socket>();
+      const token = this.extractToken(client);
+      
+      if (!token) {
+        this.logger.warn('No token provided');
+        return false;
+      }
+
+      const payload = this.jwtService.verify(token);
+      if (!payload) {
+        this.logger.warn('Invalid token');
+        return false;
+      }
+
+      // Gán userId vào socket để các handler dùng
+      (client as any).data = { 
+        userId: payload.sub, 
+        email: payload.email 
+      };
+      
+      this.logger.log(`User ${payload.sub} authenticated via WebSocket`);
+      return true;
+    } catch (error) {
+      this.logger.error('WebSocket authentication failed:', error);
+      return false;
+    }
   }
 
   private extractToken(client: Socket): string | null {
-    // Lấy token từ query hoặc header
-    if (client.handshake.query && client.handshake.query.token) {
-      return String(client.handshake.query.token);
-    }
-    if (client.handshake.headers && client.handshake.headers.authorization) {
-      const auth = client.handshake.headers.authorization;
-      if (auth.startsWith('Bearer ')) {
-        return auth.slice(7);
+    try {
+      // Lấy token từ query hoặc header
+      if (client.handshake.query && client.handshake.query.token) {
+        return String(client.handshake.query.token);
       }
+      
+      if (client.handshake.headers && client.handshake.headers.authorization) {
+        const auth = client.handshake.headers.authorization;
+        if (auth.startsWith('Bearer ')) {
+          return auth.slice(7);
+        }
+      }
+      
+      // Also check auth from handshake auth object
+      if (client.handshake.auth && client.handshake.auth.token) {
+        return client.handshake.auth.token;
+      }
+      
+      return null;
+    } catch (error) {
+      this.logger.error('Error extracting token:', error);
+      return null;
     }
-    return null;
   }
 }
