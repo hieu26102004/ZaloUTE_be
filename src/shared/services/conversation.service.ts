@@ -53,7 +53,7 @@ export class ConversationService {
   async getUserConversations(userId: Types.ObjectId) {
     return this.conversationModel
       .find({ participants: userId })
-      .populate('participants', 'email firstName lastName')
+      .populate('participants', 'email firstname lastname')
       .sort({ updatedAt: -1 })
       .exec();
   }
