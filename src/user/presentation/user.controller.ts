@@ -8,6 +8,7 @@ import {
   Query,
   Param,
   Delete,
+  Put,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -28,6 +29,7 @@ import { ResendOtpUseCase } from '../application/use-cases/resend-otp.usecase';
 import { ValidateEmailUseCase } from '../application/use-cases/validate-email.usecase';
 import { VerifyForgotPasswordOtpUseCase } from '../application/use-cases/verify-forgot-password-otp.usecase';
 import { GetUserProfileUseCase } from '../application/use-cases/get-user-profile.usecase';
+import { UpdateUserProfileUseCase } from '../application/use-cases/update-user-profile.usecase';
 // New friendship use cases
 import { SearchUserByEmailUseCase } from '../application/use-cases/search-user-by-email.usecase';
 import { SendFriendRequestUseCase } from '../application/use-cases/send-friend-request.usecase';
@@ -44,8 +46,8 @@ import {
   ResetPasswordDto,
   ValidateEmailDto,
   UserProfileDto,
+  UpdateUserProfileDto,
 } from '../application/dto/user.dto';
-// ...existing code...
 import { VerifyForgotPasswordOtpDto } from '../application/dto/user.dto';
 import { ActivateAccountUseCase } from '../application/use-cases/active-account.usecase';
 import {
@@ -71,6 +73,7 @@ export class UserController {
     private readonly validateEmailUseCase: ValidateEmailUseCase,
     private readonly verifyForgotPasswordOtpUseCase: VerifyForgotPasswordOtpUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
+    private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
     // New friendship use cases
     private readonly searchUserByEmailUseCase: SearchUserByEmailUseCase,
     private readonly sendFriendRequestUseCase: SendFriendRequestUseCase,
@@ -174,6 +177,22 @@ export class UserController {
   })
   async getProfile(@CurrentUser() user: { userId: string }) {
     return this.getUserProfileUseCase.execute(user.userId);
+  }
+
+  @Put('profile/update')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiBody({ type: UpdateUserProfileDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile updated successfully',
+    type: UserProfileDto,
+  })
+  async updateProfile(
+    @CurrentUser() user: { userId: string },
+    @Body() updateData: UpdateUserProfileDto,
+  ) {
+    return this.updateUserProfileUseCase.execute(user.userId, updateData);
   }
 
   // New friendship endpoints

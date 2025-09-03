@@ -131,3 +131,33 @@ export class UserProfileDto {
   @ApiProperty({ example: '2023-01-01T00:00:00Z', description: 'Updated at' })
   updatedAt: Date;
 }
+
+export class UpdateUserProfileDto {
+  @ApiProperty({ 
+    example: 'John', 
+    description: 'User first name',
+    required: false 
+  })
+  firstname?: string;
+
+  @ApiProperty({ 
+    example: 'Doe', 
+    description: 'User last name',
+    required: false 
+  })
+  lastname?: string;
+
+  @ApiProperty({ 
+    example: '1234567890', 
+    description: 'User phone number',
+    required: false 
+  })
+  phone?: string;
+
+  @ApiProperty({ 
+    example: 'newemail@example.com', 
+    description: 'New email address',
+    required: false 
+  })
+  email?: string;
+}

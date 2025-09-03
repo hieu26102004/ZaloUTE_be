@@ -6,6 +6,7 @@ import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.u
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.usecase';
 import { ValidateEmailUseCase } from './application/use-cases/validate-email.usecase';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.usecase';
+import { UpdateUserProfileUseCase } from './application/use-cases/update-user-profile.usecase';
 // New friendship use cases
 import { SearchUserByEmailUseCase } from './application/use-cases/search-user-by-email.usecase';
 import { SendFriendRequestUseCase } from './application/use-cases/send-friend-request.usecase';
@@ -54,6 +55,7 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
     ResendOtpUseCase,
     ValidateEmailUseCase,
     GetUserProfileUseCase,
+    UpdateUserProfileUseCase,
     JwtStrategy,
     VerifyForgotPasswordOtpUseCase,
     // New friendship use cases
