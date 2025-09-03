@@ -9,7 +9,11 @@ import {
   Param,
   Delete,
   Put,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import {
@@ -30,6 +34,7 @@ import { ValidateEmailUseCase } from '../application/use-cases/validate-email.us
 import { VerifyForgotPasswordOtpUseCase } from '../application/use-cases/verify-forgot-password-otp.usecase';
 import { GetUserProfileUseCase } from '../application/use-cases/get-user-profile.usecase';
 import { UpdateUserProfileUseCase } from '../application/use-cases/update-user-profile.usecase';
+import { UploadAvatarUseCase } from '../application/use-cases/upload-avatar.usecase';
 // New friendship use cases
 import { SearchUserByEmailUseCase } from '../application/use-cases/search-user-by-email.usecase';
 import { SendFriendRequestUseCase } from '../application/use-cases/send-friend-request.usecase';
@@ -74,6 +79,7 @@ export class UserController {
     private readonly verifyForgotPasswordOtpUseCase: VerifyForgotPasswordOtpUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
     private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private readonly uploadAvatarUseCase: UploadAvatarUseCase,
     // New friendship use cases
     private readonly searchUserByEmailUseCase: SearchUserByEmailUseCase,
     private readonly sendFriendRequestUseCase: SendFriendRequestUseCase,
@@ -193,6 +199,32 @@ export class UserController {
     @Body() updateData: UpdateUserProfileDto,
   ) {
     return this.updateUserProfileUseCase.execute(user.userId, updateData);
+  }
+
+  @Post('profile/upload-avatar')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiOperation({ summary: 'Upload user avatar' })
+  @ApiResponse({
+    status: 200,
+    description: 'Avatar uploaded successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        avatarUrl: { type: 'string' },
+      },
+    },
+  })
+  async uploadAvatar(
+    @CurrentUser() user: { userId: string },
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Vui lòng chọn file ảnh để upload');
+    }
+
+    return this.uploadAvatarUseCase.execute(user.userId, file);
   }
 
   // New friendship endpoints

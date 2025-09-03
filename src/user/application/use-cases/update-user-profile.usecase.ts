@@ -68,6 +68,7 @@ export class UpdateUserProfileUseCase {
       firstname: updatedUser.firstname,
       lastname: updatedUser.lastname,
       phone: updatedUser.phone,
+      avatarUrl: updatedUser.avatarUrl,
       isActive: updatedUser.isActive,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,

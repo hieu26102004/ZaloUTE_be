@@ -38,6 +38,7 @@ export class SearchUserByEmailUseCase {
         email: user.email,
         firstname: user.firstname,
         lastname: user.lastname,
+        avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
         isFriend: friendship?.status === FriendshipStatus.ACCEPTED,
         friendshipStatus: friendship?.status || 'none',

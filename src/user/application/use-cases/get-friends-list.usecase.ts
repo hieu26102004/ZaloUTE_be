@@ -20,6 +20,7 @@ export class GetFriendsListUseCase {
       email: item.friend.email,
       firstname: item.friend.firstname,
       lastname: item.friend.lastname,
+      avatarUrl: item.friend.avatarUrl,
       friendsSince: item.createdAt,
     }));
   }

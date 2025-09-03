@@ -25,6 +25,12 @@ export class User extends Document {
   phone: string;
 
   @Prop()
+  avatarUrl?: string;
+
+  @Prop()
+  avatarPublicId?: string;
+
+  @Prop()
   otp?: string;
 
   @Prop()

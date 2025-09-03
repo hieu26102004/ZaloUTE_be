@@ -25,6 +25,7 @@ export class GetUserProfileUseCase {
       firstname: user.firstname,
       lastname: user.lastname,
       phone: user.phone,
+      avatarUrl: user.avatarUrl,
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

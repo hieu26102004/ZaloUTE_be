@@ -28,6 +28,7 @@ export class UserProfileDto {
   email: string;
   firstname: string;
   lastname: string;
+  avatarUrl?: string;
   createdAt: Date;
   isFriend?: boolean;
   friendshipStatus?: string;
@@ -39,6 +40,7 @@ export class FriendDto {
   email: string;
   firstname: string;
   lastname: string;
+  avatarUrl?: string;
   friendsSince: Date;
 }
 
@@ -50,6 +52,7 @@ export class PendingFriendRequestDto {
     email: string;
     firstname: string;
     lastname: string;
+    avatarUrl?: string;
   };
   createdAt: Date;
   status: string;

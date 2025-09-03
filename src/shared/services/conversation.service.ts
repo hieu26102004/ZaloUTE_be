@@ -12,7 +12,7 @@ export class ConversationService {
   async findUserConversations(userId: Types.ObjectId) {
     return this.conversationModel
       .find({ participants: userId })
-      .populate('participants', 'email firstName lastName')
+      .populate('participants', 'username email firstname lastname avatarUrl')
       .sort({ updatedAt: -1 })
       .exec();
   }
@@ -36,7 +36,7 @@ export class ConversationService {
   async findConversationById(conversationId: Types.ObjectId) {
     return this.conversationModel
       .findById(conversationId)
-      .populate('participants', 'email firstName lastName')
+      .populate('participants', 'username email firstname lastname avatarUrl')
       .exec();
   }
 
@@ -53,7 +53,7 @@ export class ConversationService {
   async getUserConversations(userId: Types.ObjectId) {
     return this.conversationModel
       .find({ participants: userId })
-      .populate('participants', 'email firstname lastname')
+      .populate('participants', 'username email firstname lastname avatarUrl')
       .sort({ updatedAt: -1 })
       .exec();
   }

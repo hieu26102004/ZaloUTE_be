@@ -7,6 +7,7 @@ import { ResetPasswordUseCase } from './application/use-cases/reset-password.use
 import { ValidateEmailUseCase } from './application/use-cases/validate-email.usecase';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.usecase';
 import { UpdateUserProfileUseCase } from './application/use-cases/update-user-profile.usecase';
+import { UploadAvatarUseCase } from './application/use-cases/upload-avatar.usecase';
 // New friendship use cases
 import { SearchUserByEmailUseCase } from './application/use-cases/search-user-by-email.usecase';
 import { SendFriendRequestUseCase } from './application/use-cases/send-friend-request.usecase';
@@ -37,6 +38,7 @@ import { MAIL_SERVICE } from 'src/shared/interfaces/mail-service.token';
 import { JwtService as JwtServiceImpl } from 'src/shared/infrastructure/jwt.service';
 import { JWT_SERVICE } from 'src/shared/interfaces/jwt-service.token';
 import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-forgot-password-otp.usecase';
+import { CloudinaryService } from '../shared/infrastructure/cloudinary.service';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { VerifyForgotPasswordOtpUseCase } from './application/use-cases/verify-f
     ValidateEmailUseCase,
     GetUserProfileUseCase,
     UpdateUserProfileUseCase,
+    UploadAvatarUseCase,
+    CloudinaryService,
     JwtStrategy,
     VerifyForgotPasswordOtpUseCase,
     // New friendship use cases

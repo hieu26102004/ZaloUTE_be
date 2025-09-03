@@ -6,6 +6,8 @@ interface UserDoc {
   firstname: string;
   lastname: string;
   phone: string;
+  avatarUrl?: string;
+  avatarPublicId?: string;
   isActive: boolean;
   otp?: string;
   otpExpiresAt?: Date;
@@ -85,6 +87,8 @@ export class UserRepositoryImpl implements UserRepository {
       firstname: d.firstname,
       lastname: d.lastname,
       phone: d.phone,
+      avatarUrl: d.avatarUrl,
+      avatarPublicId: d.avatarPublicId,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
@@ -106,6 +110,8 @@ export class UserRepositoryImpl implements UserRepository {
       firstname: d.firstname,
       lastname: d.lastname,
       phone: d.phone,
+      avatarUrl: d.avatarUrl,
+      avatarPublicId: d.avatarPublicId,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
@@ -127,6 +133,8 @@ export class UserRepositoryImpl implements UserRepository {
       firstname: d.firstname,
       lastname: d.lastname,
       phone: d.phone,
+      avatarUrl: d.avatarUrl,
+      avatarPublicId: d.avatarPublicId,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
@@ -150,12 +158,18 @@ export class UserRepositoryImpl implements UserRepository {
       firstname: d.firstname,
       lastname: d.lastname,
       phone: d.phone,
+      avatarUrl: d.avatarUrl,
+      avatarPublicId: d.avatarPublicId,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
     };
+  }
+
+  async update(id: string, user: Partial<UserEntity>): Promise<UserEntity> {
+    return this.updateUser(id, user);
   }
 
   async searchByEmail(email: string): Promise<UserEntity[]> {
@@ -178,6 +192,8 @@ export class UserRepositoryImpl implements UserRepository {
         firstname: d.firstname,
         lastname: d.lastname,
         phone: d.phone,
+        avatarUrl: d.avatarUrl,
+        avatarPublicId: d.avatarPublicId,
         isActive: d.isActive,
         otp: d.otp,
         otpExpiresAt: d.otpExpiresAt,
@@ -200,6 +216,8 @@ export class UserRepositoryImpl implements UserRepository {
       firstname: d.firstname,
       lastname: d.lastname,
       phone: d.phone,
+      avatarUrl: d.avatarUrl,
+      avatarPublicId: d.avatarPublicId,
       isActive: d.isActive,
       otp: d.otp,
       otpExpiresAt: d.otpExpiresAt,

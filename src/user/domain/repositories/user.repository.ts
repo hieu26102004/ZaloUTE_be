@@ -6,6 +6,7 @@ export interface UserRepository {
   findByUsername(username: string): Promise<UserEntity | null>;
   findById(id: string): Promise<UserEntity | null>;
   updateUser(id: string, user: Partial<UserEntity>): Promise<UserEntity>;
+  update(id: string, user: Partial<UserEntity>): Promise<UserEntity>;
   activateUser(email: string, otp: string): Promise<Partial<UserEntity>>;
   searchByEmail(email: string): Promise<UserEntity[]>;
   findByPhone(phone: string): Promise<UserEntity | null>;

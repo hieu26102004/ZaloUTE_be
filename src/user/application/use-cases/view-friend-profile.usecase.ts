@@ -45,6 +45,7 @@ export class GetUserProfileUseCase {
       email: user.email,
       firstname: user.firstname,
       lastname: user.lastname,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
       isFriend,
       friendshipStatus,

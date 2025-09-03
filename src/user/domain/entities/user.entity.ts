@@ -6,6 +6,8 @@ export class UserEntity {
   firstname: string;
   lastname: string;
   phone: string;
+  avatarUrl?: string;
+  avatarPublicId?: string;
   isActive: boolean;
   otp?: string;
   otpExpiresAt?: Date;

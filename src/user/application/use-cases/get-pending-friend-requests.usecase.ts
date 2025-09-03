@@ -22,6 +22,7 @@ export class GetPendingFriendRequestsUseCase {
         email: request.requester.email,
         firstname: request.requester.firstname,
         lastname: request.requester.lastname,
+        avatarUrl: request.requester.avatarUrl,
       },
       createdAt: request.createdAt,
       status: request.status,

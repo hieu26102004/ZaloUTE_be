@@ -122,6 +122,13 @@ export class UserProfileDto {
   @ApiProperty({ example: '1234567890', description: 'Phone number' })
   phone: string;
 
+  @ApiProperty({ 
+    example: 'https://res.cloudinary.com/your-cloud/image/upload/v1234567890/avatars/user123.jpg', 
+    description: 'Avatar URL',
+    required: false 
+  })
+  avatarUrl?: string;
+
   @ApiProperty({ example: true, description: 'Account active status' })
   isActive: boolean;
 

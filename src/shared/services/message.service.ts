@@ -18,13 +18,13 @@ export class MessageService {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('sender', 'email firstName lastName')
+      .populate('sender', 'username email firstname lastname avatarUrl')
       .exec();
   }
 
   async getMessageById(messageId: Types.ObjectId) {
     return this.messageModel.findById(messageId)
-      .populate('sender', 'email firstName lastName')
+      .populate('sender', 'username email firstname lastname avatarUrl')
       .exec();
   }
 
@@ -59,7 +59,7 @@ export class MessageService {
     })
     .sort({ createdAt: -1 })
     .limit(50)
-    .populate('sender', 'email firstName lastName')
+    .populate('sender', 'username email firstname lastname avatarUrl')
     .exec();
   }
 }
