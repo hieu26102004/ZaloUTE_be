@@ -22,7 +22,7 @@ export class RespondFriendRequestDto {
   action: 'accept' | 'reject';
 }
 
-export class UserProfileDto {
+export class FriendProfileDto {
   id: string;
   username: string;
   email: string;

@@ -59,7 +59,7 @@ import {
   SearchUserByEmailDto,
   SendFriendRequestDto,
   RespondFriendRequestDto,
-  UserProfileDto as FriendProfileDto,
+  FriendProfileDto,
   FriendDto,
   PendingFriendRequestDto,
 } from '../application/dto/friendship.dto';

@@ -3,7 +3,7 @@ import { USER_REPOSITORY } from '../../domain/repositories/user-repository.token
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import { FRIENDSHIP_REPOSITORY_TOKEN } from '../../domain/repositories/friendship-repository.token';
 import type { FriendshipRepository } from '../../domain/repositories/friendship.repository';
-import { UserProfileDto } from '../dto/friendship.dto';
+import { FriendProfileDto } from '../dto/friendship.dto';
 import { FriendshipStatus } from '../../domain/entities/friendship.entity';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class GetUserProfileUseCase {
   async execute(
     profileUserId: string,
     currentUserId?: string,
-  ): Promise<UserProfileDto> {
+  ): Promise<FriendProfileDto> {
     const user = await this.userRepository.findById(profileUserId);
 
     if (!user) {

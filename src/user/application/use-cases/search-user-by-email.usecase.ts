@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { USER_REPOSITORY } from '../../domain/repositories/user-repository.token';
 import type { UserRepository } from '../../domain/repositories/user.repository';
-import { UserProfileDto } from '../dto/friendship.dto';
+import { FriendProfileDto } from '../dto/friendship.dto';
 import { FRIENDSHIP_REPOSITORY_TOKEN } from '../../domain/repositories/friendship-repository.token';
 import type { FriendshipRepository } from '../../domain/repositories/friendship.repository';
 import { FriendshipStatus } from '../../domain/entities/friendship.entity';
@@ -18,13 +18,13 @@ export class SearchUserByEmailUseCase {
   async execute(
     email: string,
     currentUserId: string,
-  ): Promise<UserProfileDto[]> {
+  ): Promise<FriendProfileDto[]> {
     const users = await this.userRepository.searchByEmail(email);
 
     // Filter out current user
     const filteredUsers = users.filter((user) => user.id !== currentUserId);
 
-    const userProfiles: UserProfileDto[] = [];
+    const userProfiles: FriendProfileDto[] = [];
 
     for (const user of filteredUsers) {
       const friendship = await this.friendshipRepository.findByUsers(
@@ -32,7 +32,7 @@ export class SearchUserByEmailUseCase {
         user.id,
       );
 
-      const profile: UserProfileDto = {
+      const profile: FriendProfileDto = {
         id: user.id,
         username: user.username,
         email: user.email,
