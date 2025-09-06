@@ -1,3 +1,5 @@
+
+
 import { Injectable, Logger } from '@nestjs/common';
 import { MessageService } from '../../shared/services/message.service';
 import { ConversationService } from '../../shared/services/conversation.service';
@@ -12,6 +14,23 @@ export class MessageSocketHandler {
     private readonly messageService: MessageService,
     private readonly conversationService: ConversationService,
   ) {}
+
+  /**
+   * Returns the conversationId for a given messageId, or null if not found.
+   */
+  public async getConversationIdByMessageId(messageId: string): Promise<string | null> {
+    try {
+      const message = await this.messageService.getMessageById(new Types.ObjectId(messageId));
+      if (message && message.conversation) {
+        // conversation may be an ObjectId or string
+        return message.conversation.toString();
+      }
+      return null;
+    } catch (err) {
+      this.logger.error('Failed to get conversationId by messageId:', err);
+      return null;
+    }
+  }
 
   async handleSendMessage(socket: any, io: any, data: any) {
     try {

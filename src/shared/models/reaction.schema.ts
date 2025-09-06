@@ -1,6 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+
+export const REACTION_TYPES = [
+  'like',
+  'love',
+  'haha',
+  'wow',
+  'sad',
+  'angry',
+];
+
 @Schema({ timestamps: true })
 export class Reaction extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Message', required: true })
@@ -9,8 +19,12 @@ export class Reaction extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: String, required: true })
-  type: string; // emoji code, sticker id, or reaction type
+  @Prop({
+    type: String,
+    required: true,
+    enum: REACTION_TYPES,
+  })
+  type: typeof REACTION_TYPES[number];
 }
 
 export const ReactionSchema = SchemaFactory.createForClass(Reaction);

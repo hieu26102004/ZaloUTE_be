@@ -44,9 +44,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() socket: Socket,
   ) {
     try {
-      const reaction = await this.reactionSocketHandler.handleAddReaction(data);
-      // Broadcast to room or users in conversation
-      this.io.to(data.messageId).emit(SOCKET_EVENTS.ADD_REACTION, reaction);
+      // Xử lý reaction
+      await this.reactionSocketHandler.handleAddReaction(data);
+      // Lấy reactions mới nhất cho message
+      const reactions = await this.reactionSocketHandler.handleGetReactions(data.messageId);
+      // Lấy conversationId từ message qua handler
+      const conversationId = await this.messageSocketHandler.getConversationIdByMessageId(data.messageId);
+      if (conversationId) {
+        this.logger.log(`emit MESSAGE_REACTION_UPDATED to room ${conversationId} for message ${data.messageId}`);
+        this.io.to(conversationId).emit(SOCKET_EVENTS.MESSAGE_REACTION_UPDATED, {
+          messageId: data.messageId,
+          reactions,
+          conversationId,
+        });
+      }
     } catch (error) {
       this.logger.error('Add reaction error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Add reaction failed' });
@@ -61,7 +72,18 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       await this.reactionSocketHandler.handleRemoveReaction(data);
-      this.io.to(data.messageId).emit(SOCKET_EVENTS.REMOVE_REACTION, data);
+      // Lấy reactions mới nhất cho message
+      const reactions = await this.reactionSocketHandler.handleGetReactions(data.messageId);
+      // Lấy conversationId từ message qua handler
+      const conversationId = await this.messageSocketHandler.getConversationIdByMessageId(data.messageId);
+      if (conversationId) {
+        this.logger.log(`emit MESSAGE_REACTION_UPDATED to room ${conversationId} for message ${data.messageId}`);
+        this.io.to(conversationId).emit(SOCKET_EVENTS.MESSAGE_REACTION_UPDATED, {
+          messageId: data.messageId,
+          reactions,
+          conversationId,
+        });
+      }
     } catch (error) {
       this.logger.error('Remove reaction error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Remove reaction failed' });

@@ -23,6 +23,7 @@ export const SOCKET_EVENTS = {
   REMOVE_REACTION: 'remove_reaction',
   GET_REACTIONS: 'get_reactions',
   REACTIONS_RESULT: 'reactions_result',
+  MESSAGE_REACTION_UPDATED: 'message_reaction_updated',
 
   // Error events
   ERROR: 'socket_error',

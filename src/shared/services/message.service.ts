@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message } from '../models/message.schema';
+import { ReactionService } from './reaction.service';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
+    private readonly reactionService: ReactionService,
   ) {}
 
   async createMessage(conversation: Types.ObjectId, sender: Types.ObjectId, content: string, type: string = 'text') {
@@ -14,12 +16,21 @@ export class MessageService {
   }
 
   async getMessages(conversation: Types.ObjectId, limit = 20, skip = 0) {
-    return this.messageModel.find({ conversation })
+    const messages = await this.messageModel.find({ conversation })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate('sender', 'username email firstname lastname avatarUrl')
+      .lean()
       .exec();
+    // Lấy reactions cho từng message song song
+    const withReactions = await Promise.all(
+      messages.map(async (msg) => {
+        const reactions = await this.reactionService.getReactionsByMessage(String(msg._id));
+        return { ...msg, reactions };
+      })
+    );
+    return withReactions;
   }
 
   async getMessageById(messageId: Types.ObjectId) {

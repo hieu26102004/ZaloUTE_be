@@ -1,5 +1,6 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { ReactionService } from '../../shared/services/reaction.service';
+import { REACTION_TYPES } from '../../shared/models/reaction.schema';
 import { MessageService } from '../../shared/services/message.service';
 import { Types } from 'mongoose';
 
@@ -11,31 +12,14 @@ export class ReactionSocketHandler {
   ) {}
 
   /**
-   * Nếu type === 'reaction' => update reaction
-   * Nếu type === 'sticker' hoặc 'emoji' => gửi message mới (cần truyền conversationId, value là stickerId/emoji)
+   * Xử lý thả cảm xúc cho message (Messenger style)
+   * Nếu user đã thả cùng loại thì bỏ, khác loại thì đổi, chưa thả thì thêm mới
    */
-  async handleAddReaction(payload: { messageId: string; userId: string; type: string; conversationId?: string; value?: string }) {
-    if (payload.type === 'reaction') {
-      return this.reactionService.addReaction(payload.messageId, payload.userId, payload.type);
+  async handleAddReaction(payload: { messageId: string; userId: string; type: string }) {
+    if (!REACTION_TYPES.includes(payload.type)) {
+      throw new Error('Invalid reaction type');
     }
-    if ((payload.type === 'sticker' || payload.type === 'emoji') && payload.conversationId && payload.value) {
-      // Debug log
-      console.log('[DEBUG] handleAddReaction - Creating message:', {
-        conversationId: payload.conversationId,
-        userId: payload.userId,
-        value: payload.value,
-        type: payload.type,
-      });
-      const result = await this.messageService.createMessage(
-        new Types.ObjectId(payload.conversationId),
-        new Types.ObjectId(payload.userId),
-        payload.value,
-        payload.type
-      );
-      console.log('[DEBUG] handleAddReaction - Message created:', result);
-      return result;
-    }
-    throw new Error('Invalid reaction type or missing data');
+    return this.reactionService.addReaction(payload.messageId, payload.userId, payload.type);
   }
 
   async handleRemoveReaction(payload: { messageId: string; userId: string }) {
