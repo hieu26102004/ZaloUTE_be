@@ -9,10 +9,12 @@ import { MessageSocketHandler } from './socket/handlers/message-socket.handler';
 import { ConversationSocketHandler } from './socket/handlers/conversation-socket.handler';
 import { Message, MessageSchema } from './shared/models/message.schema';
 import { Conversation, ConversationSchema } from './shared/models/conversation.schema';
+import { Reaction, ReactionSchema } from './shared/models/reaction.schema';
 import { WsJwtGuard } from './socket/ws-jwt.guard';
 import { JwtService } from './shared/infrastructure/jwt.service';
 import { ConversationController } from './shared/controllers/conversation.controller';
 import { MessageController } from './shared/controllers/message.controller';
+import { ReactionSocketHandler } from './socket/handlers/reaction-socket.handler';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { MessageController } from './shared/controllers/message.controller';
     MongooseModule.forFeature([
       { name: Message.name, schema: MessageSchema },
       { name: Conversation.name, schema: ConversationSchema },
+      { name: Reaction.name, schema: ReactionSchema },
     ]),
     UserModule,
   ],
@@ -31,8 +34,11 @@ import { MessageController } from './shared/controllers/message.controller';
     ConversationService,
     MessageSocketHandler,
     ConversationSocketHandler,
+    ReactionSocketHandler,
     WsJwtGuard,
     JwtService,
+    // ReactionService
+    require('./shared/services/reaction.service').ReactionService,
   ],
 })
 export class AppModule {}

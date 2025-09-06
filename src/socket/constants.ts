@@ -18,6 +18,12 @@ export const SOCKET_EVENTS = {
   TYPING_START: 'typing_start',
   TYPING_STOP: 'typing_stop',
   
+  // Reaction events
+  ADD_REACTION: 'add_reaction',
+  REMOVE_REACTION: 'remove_reaction',
+  GET_REACTIONS: 'get_reactions',
+  REACTIONS_RESULT: 'reactions_result',
+
   // Error events
   ERROR: 'socket_error',
   CONNECTION_SUCCESS: 'connection_success',

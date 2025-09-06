@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { MessageSocketHandler } from './handlers/message-socket.handler';
 import { ConversationSocketHandler } from './handlers/conversation-socket.handler';
 import { SOCKET_EVENTS } from './constants';
+import { ReactionSocketHandler } from './handlers/reaction-socket.handler';
 import { Types } from 'mongoose';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
@@ -34,7 +35,53 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   constructor(
     private readonly messageSocketHandler: MessageSocketHandler,
     private readonly conversationSocketHandler: ConversationSocketHandler,
+    private readonly reactionSocketHandler: ReactionSocketHandler,
   ) {}
+  // Reaction: Add
+  @SubscribeMessage(SOCKET_EVENTS.ADD_REACTION)
+  async handleAddReaction(
+    @MessageBody() data: { messageId: string; userId: string; type: string },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const reaction = await this.reactionSocketHandler.handleAddReaction(data);
+      // Broadcast to room or users in conversation
+      this.io.to(data.messageId).emit(SOCKET_EVENTS.ADD_REACTION, reaction);
+    } catch (error) {
+      this.logger.error('Add reaction error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Add reaction failed' });
+    }
+  }
+
+  // Reaction: Remove
+  @SubscribeMessage(SOCKET_EVENTS.REMOVE_REACTION)
+  async handleRemoveReaction(
+    @MessageBody() data: { messageId: string; userId: string },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      await this.reactionSocketHandler.handleRemoveReaction(data);
+      this.io.to(data.messageId).emit(SOCKET_EVENTS.REMOVE_REACTION, data);
+    } catch (error) {
+      this.logger.error('Remove reaction error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Remove reaction failed' });
+    }
+  }
+
+  // Reaction: Get all
+  @SubscribeMessage(SOCKET_EVENTS.GET_REACTIONS)
+  async handleGetReactions(
+    @MessageBody() data: { messageId: string },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const reactions = await this.reactionSocketHandler.handleGetReactions(data.messageId);
+      socket.emit(SOCKET_EVENTS.REACTIONS_RESULT, { messageId: data.messageId, reactions });
+    } catch (error) {
+      this.logger.error('Get reactions error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get reactions failed' });
+    }
+  }
 
   afterInit(server: Server) {
     this.logger.log('Socket Gateway initialized');
