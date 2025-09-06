@@ -25,7 +25,7 @@ export class ConversationSocketHandler {
       
       // Join socket to all user's conversation rooms
       for (const conversation of conversations) {
-        const roomName = `conversation_${conversation._id}`;
+        const roomName = `${conversation._id}`;
         socket.join(roomName);
         this.logger.log(`User ${userId} joined room ${roomName}`);
       }
@@ -37,7 +37,7 @@ export class ConversationSocketHandler {
 
   async handleJoinConversation(socket: any, conversationId: string) {
     try {
-      const roomName = `conversation_${conversationId}`;
+      const roomName = `${conversationId}`;
       socket.join(roomName);
       this.logger.log(`User ${socket.data.userId} joined room ${roomName}`);
       
@@ -53,7 +53,7 @@ export class ConversationSocketHandler {
 
   async handleLeaveConversation(socket: any, conversationId: string) {
     try {
-      const roomName = `conversation_${conversationId}`;
+      const roomName = `${conversationId}`;
       socket.leave(roomName);
       this.logger.log(`User ${socket.data.userId} left room ${roomName}`);
       
