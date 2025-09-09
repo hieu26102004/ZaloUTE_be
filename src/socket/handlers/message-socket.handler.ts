@@ -45,7 +45,7 @@ export class MessageSocketHandler {
         conversationId = (conversation as any)._id.toString();
         
         // Join both users to the conversation room if not already joined
-        const roomName = `conversation_${conversationId}`;
+        const roomName = `${conversationId}`;
         socket.join(roomName);
         
         // Also join the receiver if they're connected
@@ -67,7 +67,7 @@ export class MessageSocketHandler {
       const populatedMessage = await this.messageService.getMessageById(new Types.ObjectId((message as any)._id.toString()));
 
       // Broadcast message to all participants in the conversation room
-      const roomName = `conversation_${conversationId}`;
+      const roomName = `${conversationId}`;
       io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
 
       this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}`);
