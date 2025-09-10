@@ -260,7 +260,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       const userId = (socket as any).data?.userId;
-      socket.to(`conversation_${data.conversationId}`).emit(SOCKET_EVENTS.TYPING_START, {
+      socket.to(`${data.conversationId}`).emit(SOCKET_EVENTS.TYPING_START, {
         userId,
         conversationId: data.conversationId
       });
@@ -276,7 +276,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       const userId = (socket as any).data?.userId;
-      socket.to(`conversation_${data.conversationId}`).emit(SOCKET_EVENTS.TYPING_STOP, {
+      socket.to(`${data.conversationId}`).emit(SOCKET_EVENTS.TYPING_STOP, {
         userId,
         conversationId: data.conversationId
       });
