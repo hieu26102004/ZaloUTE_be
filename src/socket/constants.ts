@@ -12,6 +12,16 @@ export const SOCKET_EVENTS = {
   JOIN_CONVERSATION: 'join_conversation',
   LEAVE_CONVERSATION: 'leave_conversation',
   
+  // Group management events
+  GROUP_CREATED: 'group_created',
+  GROUP_NAME_UPDATED: 'group_name_updated',
+  GROUP_AVATAR_UPDATED: 'group_avatar_updated',
+  GROUP_MEMBER_ADDED: 'group_member_added',
+  GROUP_MEMBER_REMOVED: 'group_member_removed',
+  GROUP_MEMBER_LEFT: 'group_member_left',
+  GROUP_ADMIN_TRANSFERRED: 'group_admin_transferred',
+  GROUP_DISSOLVED: 'group_dissolved',
+  
   // User status events
   USER_ONLINE: 'user_online',
   USER_OFFLINE: 'user_offline',

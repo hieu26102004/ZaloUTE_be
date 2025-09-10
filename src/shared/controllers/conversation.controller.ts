@@ -16,6 +16,13 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ConversationService } from '../services/conversation.service';
 import { MessageService } from '../services/message.service';
 import { Types } from 'mongoose';
+import { 
+  CreateGroupDto, 
+  UpdateGroupNameDto, 
+  AddGroupMemberDto, 
+  RemoveGroupMemberDto, 
+  UpdateGroupAvatarDto 
+} from '../dto/group-management.dto';
 
 @Controller('conversation')
 @UseGuards(JwtAuthGuard)
@@ -66,7 +73,216 @@ export class ConversationController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new HttpException('Failed to create conversation', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(error.message || 'Failed to create conversation', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Group management endpoints
+  @Post('group')
+  async createGroup(@Body() createGroupDto: CreateGroupDto, @Request() req: any) {
+    try {
+      const userId = new Types.ObjectId(req.user.userId);
+      const participantObjectIds = createGroupDto.participantIds.map((id: string) => new Types.ObjectId(id));
+      
+      const conversation = await this.conversationService.createGroupConversation(
+        userId,
+        participantObjectIds,
+        createGroupDto.name
+      );
+      
+      return conversation;
+    } catch (error) {
+      console.error('Create group error:', error);
+      if (error.message.includes('at least 3 members') || 
+          error.message.includes('Duplicate participant IDs') ||
+          error.message.includes('Creator should not be included')) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('Failed to create group', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Put(':conversationId/group/name')
+  async updateGroupName(
+    @Param('conversationId') conversationId: string,
+    @Body() updateGroupNameDto: UpdateGroupNameDto,
+    @Request() req: any
+  ) {
+    try {
+      const userId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      
+      const conversation = await this.conversationService.updateGroupName(
+        convId,
+        updateGroupNameDto.name,
+        userId
+      );
+      
+      return conversation;
+    } catch (error) {
+      console.error('Update group name error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('Only group admin') || error.message.includes('Only group conversations')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException('Failed to update group name', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Put(':conversationId/group/members/add')
+  async addGroupMembers(
+    @Param('conversationId') conversationId: string,
+    @Body() addGroupMemberDto: AddGroupMemberDto,
+    @Request() req: any
+  ) {
+    try {
+      const userId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      const userObjectIds = addGroupMemberDto.userIds.map((id: string) => new Types.ObjectId(id));
+      
+      const conversation = await this.conversationService.addGroupMembers(
+        convId,
+        userObjectIds,
+        userId
+      );
+      
+      return conversation;
+    } catch (error) {
+      console.error('Add group members error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('Only group admin') || error.message.includes('Can only add members')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      if (error.message.includes('already members') || error.message.includes('Duplicate user IDs')) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('Failed to add group members', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Delete(':conversationId/group/members/:userId')
+  async removeGroupMember(
+    @Param('conversationId') conversationId: string,
+    @Param('userId') userIdToRemove: string,
+    @Request() req: any
+  ) {
+    try {
+      const adminId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      const userToRemoveId = new Types.ObjectId(userIdToRemove);
+      
+      const conversation = await this.conversationService.removeGroupMember(
+        convId,
+        userToRemoveId,
+        adminId
+      );
+      
+      return conversation;
+    } catch (error) {
+      console.error('Remove group member error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('Only group admin') || error.message.includes('Can only remove members') || error.message.includes('admin cannot be removed')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      if (error.message.includes('not a member')) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('Failed to remove group member', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Put(':conversationId/group/avatar')
+  async updateGroupAvatar(
+    @Param('conversationId') conversationId: string,
+    @Body() updateGroupAvatarDto: UpdateGroupAvatarDto,
+    @Request() req: any
+  ) {
+    try {
+      const userId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      
+      const conversation = await this.conversationService.updateGroupAvatar(
+        convId,
+        updateGroupAvatarDto.avatar,
+        userId
+      );
+      
+      return conversation;
+    } catch (error) {
+      console.error('Update group avatar error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('Only group admin') || error.message.includes('Only group conversations')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException('Failed to update group avatar', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post(':conversationId/group/leave')
+  async leaveGroup(
+    @Param('conversationId') conversationId: string,
+    @Request() req: any
+  ) {
+    try {
+      const userId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      
+      const conversation = await this.conversationService.leaveGroup(convId, userId);
+      
+      return { success: true, conversation };
+    } catch (error) {
+      console.error('Leave group error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('admin cannot leave') || error.message.includes('Can only leave group')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      if (error.message.includes('not a member')) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('Failed to leave group', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Put(':conversationId/group/admin/transfer')
+  async transferGroupAdmin(
+    @Param('conversationId') conversationId: string,
+    @Body() body: { newAdminId: string },
+    @Request() req: any
+  ) {
+    try {
+      const currentAdminId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      const newAdminId = new Types.ObjectId(body.newAdminId);
+      
+      const conversation = await this.conversationService.transferGroupAdmin(
+        convId,
+        newAdminId,
+        currentAdminId
+      );
+      
+      return conversation;
+    } catch (error) {
+      console.error('Transfer group admin error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('Only current group admin') || error.message.includes('Can only transfer admin')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      if (error.message.includes('must be a member')) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('Failed to transfer group admin', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -189,6 +405,31 @@ export class ConversationController {
         throw error;
       }
       throw new HttpException('Failed to search messages', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Delete('group/:conversationId/dissolve')
+  async dissolveGroup(
+    @Param('conversationId') conversationId: string,
+    @Request() req: any
+  ) {
+    console.log('Dissolve group endpoint called:', conversationId);
+    try {
+      const adminId = new Types.ObjectId(req.user.userId);
+      const convId = new Types.ObjectId(conversationId);
+      
+      const result = await this.conversationService.dissolveGroup(convId, adminId);
+      
+      return result;
+    } catch (error) {
+      console.error('Dissolve group error:', error);
+      if (error.message.includes('not found')) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+      if (error.message.includes('Only group admin') || error.message.includes('Can only dissolve')) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException('Failed to dissolve group', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

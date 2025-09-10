@@ -14,6 +14,9 @@ export class Conversation extends Document {
 
   @Prop({ type: String })
   avatar?: string; // For group chat
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  groupAdmin?: Types.ObjectId; // For group chat admin
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

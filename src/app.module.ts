@@ -7,6 +7,7 @@ import { MessageService } from './shared/services/message.service';
 import { ConversationService } from './shared/services/conversation.service';
 import { MessageSocketHandler } from './socket/handlers/message-socket.handler';
 import { ConversationSocketHandler } from './socket/handlers/conversation-socket.handler';
+import { GroupSocketHandler } from './socket/handlers/group-socket.handler';
 import { Message, MessageSchema } from './shared/models/message.schema';
 import { Conversation, ConversationSchema } from './shared/models/conversation.schema';
 import { Reaction, ReactionSchema } from './shared/models/reaction.schema';
@@ -34,6 +35,7 @@ import { ReactionSocketHandler } from './socket/handlers/reaction-socket.handler
     ConversationService,
     MessageSocketHandler,
     ConversationSocketHandler,
+    GroupSocketHandler,
     ReactionSocketHandler,
     WsJwtGuard,
     JwtService,

@@ -11,12 +11,22 @@ import {
 import { Server, Socket } from 'socket.io';
 import { MessageSocketHandler } from './handlers/message-socket.handler';
 import { ConversationSocketHandler } from './handlers/conversation-socket.handler';
+import { GroupSocketHandler } from './handlers/group-socket.handler';
 import { SOCKET_EVENTS } from './constants';
 import { ReactionSocketHandler } from './handlers/reaction-socket.handler';
 import { Types } from 'mongoose';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { GetConversationsDto } from './dto/get-conversations.dto';
+import { 
+  CreateGroupSocketDto, 
+  UpdateGroupNameSocketDto, 
+  AddGroupMemberSocketDto, 
+  RemoveGroupMemberSocketDto, 
+  LeaveGroupSocketDto, 
+  TransferGroupAdminSocketDto,
+  DissolveGroupSocketDto
+} from './dto/group-socket.dto';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UseGuards, Logger } from '@nestjs/common';
@@ -35,6 +45,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   constructor(
     private readonly messageSocketHandler: MessageSocketHandler,
     private readonly conversationSocketHandler: ConversationSocketHandler,
+    private readonly groupSocketHandler: GroupSocketHandler,
     private readonly reactionSocketHandler: ReactionSocketHandler,
   ) {}
   // Reaction: Add
@@ -271,6 +282,140 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
     } catch (error) {
       this.logger.error('Typing stop error:', error);
+    }
+  }
+
+  // Group management socket events
+  @SubscribeMessage('create_group')
+  async handleCreateGroup(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(CreateGroupSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleCreateGroup(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Create group socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Create group failed' });
+    }
+  }
+
+  @SubscribeMessage('update_group_name')
+  async handleUpdateGroupName(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(UpdateGroupNameSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleUpdateGroupName(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Update group name socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Update group name failed' });
+    }
+  }
+
+  @SubscribeMessage('add_group_members')
+  async handleAddGroupMembers(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(AddGroupMemberSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleAddGroupMembers(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Add group members socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Add group members failed' });
+    }
+  }
+
+  @SubscribeMessage('remove_group_member')
+  async handleRemoveGroupMember(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(RemoveGroupMemberSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleRemoveGroupMember(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Remove group member socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Remove group member failed' });
+    }
+  }
+
+  @SubscribeMessage('leave_group')
+  async handleLeaveGroup(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(LeaveGroupSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleLeaveGroup(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Leave group socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Leave group failed' });
+    }
+  }
+
+  @SubscribeMessage('transfer_group_admin')
+  async handleTransferGroupAdmin(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(TransferGroupAdminSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleTransferGroupAdmin(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Transfer group admin socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Transfer group admin failed' });
+    }
+  }
+
+  @SubscribeMessage('dissolve_group')
+  async handleDissolveGroup(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const dto = plainToInstance(DissolveGroupSocketDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      await this.groupSocketHandler.handleDissolveGroup(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Dissolve group socket error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Dissolve group failed' });
     }
   }
 
