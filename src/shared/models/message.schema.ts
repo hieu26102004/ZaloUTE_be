@@ -12,8 +12,12 @@ export class Message extends Document {
   @Prop({ type: String, required: true })
   content: string;
 
-  @Prop({ type: String, enum: ['text', 'image', 'file', 'emoji', 'sticker'], default: 'text' })
-  type: 'text' | 'image' | 'file' | 'emoji' | 'sticker';
+  @Prop({
+    type: String,
+    enum: ['text', 'image', 'video', 'file', 'emoji', 'sticker'],
+    default: 'text',
+  })
+  type: 'text' | 'image' | 'video' | 'file' | 'emoji' | 'sticker';
 
   @Prop({ type: Boolean, default: false })
   isRead: boolean;

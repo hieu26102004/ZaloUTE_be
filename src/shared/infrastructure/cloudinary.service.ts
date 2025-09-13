@@ -17,16 +17,62 @@ export class CloudinaryService {
     folder: string = 'avatars',
   ): Promise<{ url: string; publicId: string }> {
     return new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'image',
-          folder: folder,
-          transformation: [
-            { width: 300, height: 300, crop: 'fill', gravity: 'face' },
-            { quality: 'auto:good' },
-          ],
-        },
-        (error, result) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: 'image',
+            folder: folder,
+            transformation: [
+              { width: 300, height: 300, crop: 'fill', gravity: 'face' },
+              { quality: 'auto:good' },
+            ],
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else if (result) {
+              resolve({
+                url: result.secure_url,
+                publicId: result.public_id,
+              });
+            } else {
+              reject(new Error('Upload failed - no result'));
+            }
+          },
+        )
+        .end(file.buffer);
+    });
+  }
+
+  async uploadAnyFile(
+    file: Express.Multer.File,
+    folder: string = 'chat-files',
+    resourceType: 'image' | 'video' | 'raw' = 'raw',
+  ): Promise<{ url: string; publicId: string }> {
+    return new Promise((resolve, reject) => {
+      const uploadOptions: any = {
+        resource_type: resourceType,
+        folder: folder,
+      };
+
+      // Add transformations for images
+      if (resourceType === 'image') {
+        uploadOptions.transformation = [
+          { width: 800, height: 600, crop: 'limit' },
+          { quality: 'auto:good' },
+        ];
+      }
+
+      // Add transformations for videos
+      if (resourceType === 'video') {
+        uploadOptions.transformation = [
+          { width: 640, height: 480, crop: 'limit' },
+          { quality: 'auto:good' },
+        ];
+      }
+
+      cloudinary.uploader
+        .upload_stream(uploadOptions, (error, result) => {
           if (error) {
             reject(error);
           } else if (result) {
@@ -37,8 +83,8 @@ export class CloudinaryService {
           } else {
             reject(new Error('Upload failed - no result'));
           }
-        },
-      ).end(file.buffer);
+        })
+        .end(file.buffer);
     });
   }
 

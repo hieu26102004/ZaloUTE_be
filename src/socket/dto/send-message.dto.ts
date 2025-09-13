@@ -14,6 +14,6 @@ export class SendMessageDto {
   content: string;
 
   @IsOptional()
-  @IsIn(['text', 'image', 'file'])
+  @IsIn(['text', 'image', 'video', 'file', 'emoji', 'sticker'])
   type?: string;
 }
