@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { UploadModule } from './shared/upload.module';
+import { CallModule } from './call/call.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatGateway } from './socket/chat.gateway';
 import { MessageService } from './shared/services/message.service';
@@ -32,6 +33,7 @@ import { ReactionSocketHandler } from './socket/handlers/reaction-socket.handler
     ]),
     UserModule,
     UploadModule,
+    CallModule,
   ],
   controllers: [ConversationController, MessageController],
   providers: [
