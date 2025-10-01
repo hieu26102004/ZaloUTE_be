@@ -39,7 +39,6 @@ import { WsJwtGuard } from './ws-jwt.guard';
 @UseGuards(WsJwtGuard)
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() io: Server;
-  private readonly logger = new Logger(ChatGateway.name);
   private readonly connectedUsers = new Map<string, string>(); // userId -> socketId
 
   constructor(
@@ -62,7 +61,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Lấy conversationId từ message qua handler
       const conversationId = await this.messageSocketHandler.getConversationIdByMessageId(data.messageId);
       if (conversationId) {
-        this.logger.log(`emit MESSAGE_REACTION_UPDATED to room ${conversationId} for message ${data.messageId}`);
         this.io.to(conversationId).emit(SOCKET_EVENTS.MESSAGE_REACTION_UPDATED, {
           messageId: data.messageId,
           reactions,
@@ -70,7 +68,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         });
       }
     } catch (error) {
-      this.logger.error('Add reaction error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Add reaction failed' });
     }
   }
@@ -88,7 +85,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Lấy conversationId từ message qua handler
       const conversationId = await this.messageSocketHandler.getConversationIdByMessageId(data.messageId);
       if (conversationId) {
-        this.logger.log(`emit MESSAGE_REACTION_UPDATED to room ${conversationId} for message ${data.messageId}`);
         this.io.to(conversationId).emit(SOCKET_EVENTS.MESSAGE_REACTION_UPDATED, {
           messageId: data.messageId,
           reactions,
@@ -96,7 +92,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         });
       }
     } catch (error) {
-      this.logger.error('Remove reaction error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Remove reaction failed' });
     }
   }
@@ -111,13 +106,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const reactions = await this.reactionSocketHandler.handleGetReactions(data.messageId);
       socket.emit(SOCKET_EVENTS.REACTIONS_RESULT, { messageId: data.messageId, reactions });
     } catch (error) {
-      this.logger.error('Get reactions error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get reactions failed' });
     }
   }
 
   afterInit(server: Server) {
-    this.logger.log('Socket Gateway initialized');
   }
 
   async handleConnection(socket: Socket) {
@@ -138,10 +131,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           userId 
         });
         
-        this.logger.log(`User ${userId} connected`);
       }
     } catch (error) {
-      this.logger.error('Connection error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Connection failed' });
     }
   }
@@ -155,10 +146,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Notify others that user is offline
         socket.broadcast.emit(SOCKET_EVENTS.USER_OFFLINE, { userId });
         
-        this.logger.log(`User ${userId} disconnected`);
       }
     } catch (error) {
-      this.logger.error('Disconnect error:', error);
     }
   }
 
@@ -177,7 +166,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.messageSocketHandler.handleSendMessage(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Send message error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Send message failed' });
     }
   }
@@ -188,18 +176,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() socket: Socket,
   ) {
     try {
-      this.logger.log(`GET_MESSAGES received data: ${JSON.stringify(data)}`);
       // Validate DTO
       const dto = plainToInstance(GetMessagesDto, data);
       const errors = await validate(dto, { skipMissingProperties: true });
       if (errors.length > 0) {
-        this.logger.error(`GET_MESSAGES validation errors: ${JSON.stringify(errors)}`);
         socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
         return;
       }
       await this.messageSocketHandler.handleGetMessages(socket, dto);
     } catch (error) {
-      this.logger.error('Get messages error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get messages failed' });
     }
   }
@@ -210,19 +195,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() socket: Socket,
   ) {
     try {
-      this.logger.log(`GET_CONVERSATIONS received data: ${JSON.stringify(data)}`);
       // For GET_CONVERSATIONS, we don't need strict validation since it's just optional pagination
       // If data is provided, validate it, otherwise use defaults
       const dto = plainToInstance(GetConversationsDto, data || {});
       const errors = await validate(dto, { skipMissingProperties: true });
       if (errors.length > 0) {
-        this.logger.error(`GET_CONVERSATIONS validation errors: ${JSON.stringify(errors)}`);
         socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
         return;
       }
       await this.conversationSocketHandler.handleGetConversations(socket);
     } catch (error) {
-      this.logger.error('Get conversations error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get conversations failed' });
     }
   }
@@ -235,7 +217,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       await this.conversationSocketHandler.handleJoinConversation(socket, data.conversationId);
     } catch (error) {
-      this.logger.error('Join conversation error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Join conversation failed' });
     }
   }
@@ -248,7 +229,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       await this.conversationSocketHandler.handleLeaveConversation(socket, data.conversationId);
     } catch (error) {
-      this.logger.error('Leave conversation error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Leave conversation failed' });
     }
   }
@@ -265,7 +245,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         conversationId: data.conversationId
       });
     } catch (error) {
-      this.logger.error('Typing start error:', error);
     }
   }
 
@@ -281,7 +260,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         conversationId: data.conversationId
       });
     } catch (error) {
-      this.logger.error('Typing stop error:', error);
     }
   }
 
@@ -300,7 +278,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleCreateGroup(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Create group socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Create group failed' });
     }
   }
@@ -319,7 +296,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleUpdateGroupName(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Update group name socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Update group name failed' });
     }
   }
@@ -338,7 +314,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleAddGroupMembers(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Add group members socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Add group members failed' });
     }
   }
@@ -357,7 +332,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleRemoveGroupMember(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Remove group member socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Remove group member failed' });
     }
   }
@@ -376,7 +350,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleLeaveGroup(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Leave group socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Leave group failed' });
     }
   }
@@ -395,7 +368,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleTransferGroupAdmin(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Transfer group admin socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Transfer group admin failed' });
     }
   }
@@ -414,7 +386,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.groupSocketHandler.handleDissolveGroup(socket, this.io, dto);
     } catch (error) {
-      this.logger.error('Dissolve group socket error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Dissolve group failed' });
     }
   }

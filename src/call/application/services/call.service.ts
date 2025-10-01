@@ -18,6 +18,11 @@ export class CallService {
   async initiateCall(callerId: string, initiateCallDto: InitiateCallDto): Promise<CallEntity> {
     const { receiverId, callType } = initiateCallDto;
 
+    console.log('🏁 CallService: Initiating call from', callerId, 'to', receiverId);
+
+    // First cleanup any stale calls for this user
+    await this.forceCleanupUserCalls(callerId);
+
     // Validate call permissions
     await this.validateCallPermissions(callerId, receiverId);
 
@@ -71,14 +76,73 @@ export class CallService {
   async acceptCall(userId: string, acceptCallDto: AcceptCallDto): Promise<CallEntity> {
     const { callId } = acceptCallDto;
     
+    console.log('✅ CallService: Accept call request for callId:', callId, 'from user:', userId);
+    
     const call = await this.callRepository.findCallById(callId);
     if (!call) {
+      console.log('❌ CallService: Call not found:', callId);
       throw new NotFoundException('Call not found');
     }
+    
+    console.log('✅ CallService: Found call:', call._id, 'status:', call.status, 'caller:', call.callerId, 'receiver:', call.receiverId);
 
-    if (call.receiverId !== userId) {
+    console.log('✅ CallService: Authorization check - call.receiverId:', call.receiverId, 'userId:', userId);
+    console.log('✅ CallService: Type check - receiverId type:', typeof call.receiverId, 'userId type:', typeof userId);
+    console.log('✅ CallService: Length check - receiverId length:', call.receiverId?.length, 'userId length:', userId?.length);
+    
+    // Handle populated receiverId (object) vs string comparison
+    let receiverIdToCompare: string;
+    console.log('🔍 CallService: Checking receiverId structure...');
+    console.log('🔍 CallService: call.receiverId:', JSON.stringify(call.receiverId));
+    
+    // Try to extract ID from receiverId
+    if (call.receiverId && typeof call.receiverId === 'object' && '_id' in call.receiverId) {
+      // Direct object with _id property
+      const extracted = (call.receiverId as any)._id;
+      receiverIdToCompare = extracted.toString();
+      console.log('✅ CallService: Extracted receiverId from direct object:', receiverIdToCompare);
+    } else if (typeof call.receiverId === 'string' && call.receiverId.includes('ObjectId(')) {
+      // Stringified object - extract ObjectId
+      const objectIdMatch = call.receiverId.match(/ObjectId\('([^']+)'\)/);
+      if (objectIdMatch && objectIdMatch[1]) {
+        receiverIdToCompare = objectIdMatch[1];
+        console.log('✅ CallService: Extracted ObjectId from stringified object:', receiverIdToCompare);
+      } else {
+        // Fallback: try to parse as JSON and extract _id
+        try {
+          const parsed = JSON.parse(call.receiverId);
+          if (parsed._id) {
+            receiverIdToCompare = parsed._id.toString();
+            console.log('✅ CallService: Extracted _id from parsed JSON:', receiverIdToCompare);
+          } else {
+            receiverIdToCompare = call.receiverId;
+            console.log('✅ CallService: Using receiverId as direct string (no ObjectId found):', receiverIdToCompare);
+          }
+        } catch (error) {
+          receiverIdToCompare = call.receiverId;
+          console.log('✅ CallService: Using receiverId as direct string (JSON parse failed):', receiverIdToCompare);
+        }
+      }
+    } else if (typeof call.receiverId === 'string') {
+      // Plain string ID
+      receiverIdToCompare = call.receiverId;
+      console.log('✅ CallService: Using receiverId as direct string:', receiverIdToCompare);
+    } else {
+      // Last resort - convert to string
+      receiverIdToCompare = String(call.receiverId);
+      console.log('⚠️ CallService: Converting receiverId to string (last resort):', receiverIdToCompare);
+    }
+    
+    console.log('🔍 CallService: Final comparison - receiverIdToCompare:', receiverIdToCompare, 'userId:', userId);
+    console.log('🔍 CallService: Strict equality:', receiverIdToCompare === userId);
+    
+    if (receiverIdToCompare !== userId) {
+      console.log('❌ CallService: Authorization failed - receiver ID mismatch');
+      console.log('❌ CallService: Receiver ID (extracted):', receiverIdToCompare);
+      console.log('❌ CallService: User ID:', userId);
       throw new ForbiddenException('You are not authorized to accept this call');
     }
+    console.log('✅ CallService: Authorization passed, proceeding with acceptance');
 
     if (call.status !== CallStatus.PENDING && call.status !== CallStatus.RINGING) {
       throw new BadRequestException('Call cannot be accepted in its current state');
@@ -106,15 +170,71 @@ export class CallService {
 
   async rejectCall(userId: string, rejectCallDto: RejectCallDto): Promise<CallEntity> {
     const { callId, reason } = rejectCallDto;
+    
+    console.log('❌ CallService: Reject call request for callId:', callId, 'from user:', userId, 'reason:', reason);
 
     const call = await this.callRepository.findCallById(callId);
     if (!call) {
       throw new NotFoundException('Call not found');
     }
 
-    if (call.receiverId !== userId) {
+    console.log('❌ CallService: Authorization check - call.receiverId:', call.receiverId, 'userId:', userId);
+    console.log('❌ CallService: Type check - receiverId type:', typeof call.receiverId, 'userId type:', typeof userId);
+    console.log('❌ CallService: Length check - receiverId length:', call.receiverId?.length, 'userId length:', userId?.length);
+    
+    // Handle populated receiverId (object) vs string comparison
+    let receiverIdToCompare: string;
+    console.log('🔍 CallService: Checking receiverId structure...');
+    console.log('🔍 CallService: call.receiverId:', JSON.stringify(call.receiverId));
+    
+    // Try to extract ID from receiverId
+    if (call.receiverId && typeof call.receiverId === 'object' && '_id' in call.receiverId) {
+      // Direct object with _id property
+      const extracted = (call.receiverId as any)._id;
+      receiverIdToCompare = extracted.toString();
+      console.log('❌ CallService: Extracted receiverId from direct object:', receiverIdToCompare);
+    } else if (typeof call.receiverId === 'string' && call.receiverId.includes('ObjectId(')) {
+      // Stringified object - extract ObjectId
+      const objectIdMatch = call.receiverId.match(/ObjectId\('([^']+)'\)/);
+      if (objectIdMatch && objectIdMatch[1]) {
+        receiverIdToCompare = objectIdMatch[1];
+        console.log('❌ CallService: Extracted ObjectId from stringified object:', receiverIdToCompare);
+      } else {
+        // Fallback: try to parse as JSON and extract _id
+        try {
+          const parsed = JSON.parse(call.receiverId);
+          if (parsed._id) {
+            receiverIdToCompare = parsed._id.toString();
+            console.log('❌ CallService: Extracted _id from parsed JSON:', receiverIdToCompare);
+          } else {
+            receiverIdToCompare = call.receiverId;
+            console.log('❌ CallService: Using receiverId as direct string (no ObjectId found):', receiverIdToCompare);
+          }
+        } catch (error) {
+          receiverIdToCompare = call.receiverId;
+          console.log('❌ CallService: Using receiverId as direct string (JSON parse failed):', receiverIdToCompare);
+        }
+      }
+    } else if (typeof call.receiverId === 'string') {
+      // Plain string ID
+      receiverIdToCompare = call.receiverId;
+      console.log('❌ CallService: Using receiverId as direct string:', receiverIdToCompare);
+    } else {
+      // Last resort - convert to string
+      receiverIdToCompare = String(call.receiverId);
+      console.log('⚠️ CallService: Converting receiverId to string (last resort):', receiverIdToCompare);
+    }
+    
+    console.log('🔍 CallService: Final comparison - receiverIdToCompare:', receiverIdToCompare, 'userId:', userId);
+    console.log('🔍 CallService: Strict equality:', receiverIdToCompare === userId);
+    
+    if (receiverIdToCompare !== userId) {
+      console.log('❌ CallService: Authorization failed - receiver ID mismatch');
+      console.log('❌ CallService: Receiver ID (extracted):', receiverIdToCompare);
+      console.log('❌ CallService: User ID:', userId);
       throw new ForbiddenException('You are not authorized to reject this call');
     }
+    console.log('✅ CallService: Authorization passed, proceeding with rejection');
 
     if (call.status === CallStatus.ENDED || call.status === CallStatus.REJECTED) {
       throw new BadRequestException('Call has already ended');
@@ -220,6 +340,8 @@ export class CallService {
 
     // Check if caller has active calls
     const callerActiveCalls = await this.callRepository.findActiveCallsByUser(callerId);
+    console.log('🔍 CallService: Caller active calls:', callerActiveCalls.length, callerActiveCalls.map(c => ({ id: c._id, status: c.status, createdAt: c.createdAt })));
+    
     if (callerActiveCalls.length > 0) {
       throw new BadRequestException('You already have an active call');
     }
@@ -243,6 +365,45 @@ export class CallService {
     
     // For now, just check if user has a socket connection
     return this.userSockets.has(userId);
+  }
+
+  // Force cleanup all calls for a user (when initiating new call)
+  async forceCleanupUserCalls(userId: string): Promise<void> {
+    const activeCalls = await this.callRepository.findActiveCallsByUser(userId);
+    console.log('🧹 CallService: Force cleaning up', activeCalls.length, 'active calls for user', userId);
+    
+    for (const call of activeCalls) {
+      console.log('🧹 CallService: Ending call', call._id, 'status:', call.status);
+      await this.callRepository.updateCallStatus(call._id!, CallStatus.FAILED);
+      this.activeCalls.delete(call._id!);
+    }
+  }
+
+  // Cleanup stale calls for a specific user
+  async cleanupUserStaleCalls(userId: string): Promise<void> {
+    const activeCalls = await this.callRepository.findActiveCallsByUser(userId);
+    console.log('🧹 CallService: Found', activeCalls.length, 'active calls for user', userId);
+    
+    for (const call of activeCalls) {
+      const now = new Date();
+      const callAge = now.getTime() - call.createdAt.getTime();
+      const twoMinutesInMs = 2 * 60 * 1000; // 2 minutes
+      
+      // End calls older than 2 minutes that are still pending
+      if (callAge > twoMinutesInMs && call.status === CallStatus.PENDING) {
+        console.log('🧹 CallService: Cleaning up stale call', call._id, 'age:', Math.round(callAge / 1000), 'seconds');
+        await this.callRepository.updateCallStatus(call._id!, CallStatus.FAILED);
+        this.activeCalls.delete(call._id!);
+      } else if (call.status === CallStatus.PENDING) {
+        // Also cleanup ANY pending calls older than 30 seconds
+        const thirtySecondsInMs = 30 * 1000;
+        if (callAge > thirtySecondsInMs) {
+          console.log('🧹 CallService: Force cleaning up old pending call', call._id, 'age:', Math.round(callAge / 1000), 'seconds');
+          await this.callRepository.updateCallStatus(call._id!, CallStatus.FAILED);
+          this.activeCalls.delete(call._id!);
+        }
+      }
+    }
   }
 
   // Cleanup method for when server restarts

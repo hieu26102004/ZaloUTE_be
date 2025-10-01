@@ -16,7 +16,14 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   setupGlobalInterceptors(app);
-  app.enableCors();
+  
+  // Enable CORS for all origins (for testing)
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
   await app.listen(process.env.PORT ?? 8080);
 }

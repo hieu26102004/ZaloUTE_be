@@ -5,7 +5,6 @@ import { Socket } from 'socket.io';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
-  private readonly logger = new Logger(WsJwtGuard.name);
 
   constructor(private readonly jwtService: JwtService) {}
 
@@ -14,27 +13,33 @@ export class WsJwtGuard implements CanActivate {
       const client: Socket = context.switchToWs().getClient<Socket>();
       const token = this.extractToken(client);
       
+      console.log('🛡️ WsJwtGuard: Processing connection', client.id);
+      console.log('🔑 WsJwtGuard: Token found:', !!token);
+      
       if (!token) {
-        this.logger.warn('No token provided');
+        console.log('❌ WsJwtGuard: No token provided');
         return false;
       }
 
       const payload = this.jwtService.verify(token);
       if (!payload) {
-        this.logger.warn('Invalid token');
+        console.log('❌ WsJwtGuard: Invalid token');
         return false;
       }
 
-      // Gán userId vào socket để các handler dùng
+      // Gán user data vào socket để các handler dùng (giống format CallGateway expect)
       (client as any).data = { 
-        userId: payload.sub, 
-        email: payload.email 
+        user: {
+          userId: payload.sub, 
+          email: payload.email,
+          ...payload
+        }
       };
       
-      this.logger.log(`User ${payload.sub} authenticated via WebSocket`);
+      console.log('✅ WsJwtGuard: Auth successful for user:', payload.sub);
       return true;
     } catch (error) {
-      this.logger.error('WebSocket authentication failed:', error);
+      console.log('❌ WsJwtGuard: Error:', error.message);
       return false;
     }
   }
@@ -60,7 +65,6 @@ export class WsJwtGuard implements CanActivate {
       
       return null;
     } catch (error) {
-      this.logger.error('Error extracting token:', error);
       return null;
     }
   }

@@ -8,8 +8,6 @@ import { Types } from 'mongoose';
 
 @Injectable()
 export class MessageSocketHandler {
-  private readonly logger = new Logger(MessageSocketHandler.name);
-
   constructor(
     private readonly messageService: MessageService,
     private readonly conversationService: ConversationService,
@@ -27,7 +25,6 @@ export class MessageSocketHandler {
       }
       return null;
     } catch (err) {
-      this.logger.error('Failed to get conversationId by messageId:', err);
       return null;
     }
   }
@@ -70,18 +67,14 @@ export class MessageSocketHandler {
       const roomName = `${conversationId}`;
       io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
 
-      this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}`);
       
     } catch (err) {
-      this.logger.error('Send message failed:', err);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Send message failed', error: err.message });
     }
   }
 
   async handleGetMessages(socket: any, data: any) {
     try {
-      this.logger.log(`Getting messages for conversation: ${data.conversationId}`);
-      
       const messages = await this.messageService.getMessages(
         new Types.ObjectId(data.conversationId),
         data.limit || 20,
@@ -89,7 +82,6 @@ export class MessageSocketHandler {
       );
       socket.emit(SOCKET_EVENTS.GET_MESSAGES_RESULT, messages);
     } catch (err) {
-      this.logger.error('Get messages failed:', err);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get messages failed', error: err.message });
     }
   }

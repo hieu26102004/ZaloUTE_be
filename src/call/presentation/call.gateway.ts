@@ -24,33 +24,89 @@ import {
 } from '../application/dto/call-management.dto';
 import { WsJwtGuard } from '../../socket/ws-jwt.guard';
 import { CallStatus } from '../infrastructure/call.schema';
+import { JwtService } from '../../shared/infrastructure/jwt.service';
 
 @WebSocketGateway({
   namespace: '/call',
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: '*', // Allow all origins for testing
     credentials: true,
+    methods: ['GET', 'POST'],
   },
 })
-@UseGuards(WsJwtGuard)
 export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(CallGateway.name);
 
-  constructor(private readonly callService: CallService) {}
+  constructor(
+    private readonly callService: CallService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   afterInit(server: Server) {
     this.logger.log('Call Gateway initialized');
   }
 
   handleConnection(client: Socket) {
-    const userId = client.data.user?.userId;
-    if (userId) {
+    console.log('🔗 CallGateway: New client connecting, ID:', client.id);
+    
+    try {
+      // Authenticate user manually
+      const token = this.extractToken(client);
+      
+      if (!token) {
+        console.log('❌ CallGateway: No token provided, socket:', client.id);
+        client.disconnect(true);
+        return;
+      }
+
+      const payload = this.jwtService.verify(token);
+      if (!payload) {
+        console.log('❌ CallGateway: Invalid token, socket:', client.id);
+        client.disconnect(true);
+        return;
+      }
+
+      // Set user data
+      (client as any).data = { 
+        user: {
+          userId: payload.sub, 
+          email: payload.email,
+          ...payload
+        }
+      };
+
+      const userId = payload.sub;
       this.callService.registerUserSocket(userId, client.id);
       client.join(`user_${userId}`);
-      this.logger.log(`User ${userId} connected to call gateway`);
+      console.log('✅ CallGateway: User', userId, 'connected with socket', client.id);
+      console.log('🏠 CallGateway: User joined room:', `user_${userId}`);
+      
+    } catch (error) {
+      console.log('❌ CallGateway: Auth error:', error.message, 'socket:', client.id);
+      client.disconnect(true);
+    }
+  }
+
+  private extractToken(client: Socket): string | null {
+    try {
+      // Lấy token từ query hoặc header
+      if (client.handshake.query && client.handshake.query.token) {
+        return String(client.handshake.query.token);
+      }
+      
+      if (client.handshake.headers && client.handshake.headers.authorization) {
+        const auth = client.handshake.headers.authorization;
+        if (auth.startsWith('Bearer ')) {
+          return auth.slice(7);
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
     }
   }
 
@@ -58,7 +114,6 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const userId = client.data.user?.userId;
     if (userId) {
       this.callService.unregisterUserSocket(userId);
-      this.logger.log(`User ${userId} disconnected from call gateway`);
     }
   }
 
@@ -70,6 +125,9 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       const userId = client.data.user?.userId;
+      console.log('📞 CallGateway: Call initiate request from user:', userId);
+      console.log('📞 CallGateway: Call data:', data);
+      
       if (!userId) {
         client.emit('call:error', { message: 'User not authenticated' });
         return;
@@ -85,13 +143,15 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
 
       // Notify receiver
+      console.log('📩 CallGateway: Sending call:incoming to room user_' + data.receiverId);
       this.server.to(`user_${data.receiverId}`).emit('call:incoming', {
         callId: call._id,
         call,
         caller: client.data.user,
       });
 
-      this.logger.log(`Call initiated: ${call._id} from ${userId} to ${data.receiverId}`);
+      // Log call initiation for debugging
+      console.log(`📞 CallGateway: Call ${call._id}: ${userId} -> ${data.receiverId}`);
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -107,25 +167,56 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       const userId = client.data.user?.userId;
+      console.log('✅ CallGateway: Call accept request from user:', userId);
+      console.log('✅ CallGateway: Accept data:', data);
+      
       const call = await this.callService.acceptCall(userId, data);
 
-      // Notify both participants
-      const activeCall = await this.callService.getActiveCall(data.callId);
-      if (activeCall) {
-        for (const participant of activeCall.participants) {
-          this.server.to(`user_${participant.userId}`).emit('call:accepted', {
-            callId: data.callId,
-            call,
-            acceptedBy: userId,
-          });
-        }
-
-        // Join both users to call room
-        this.server.to(`user_${call.callerId}`).socketsJoin(`call_${data.callId}`);
-        this.server.to(`user_${call.receiverId}`).socketsJoin(`call_${data.callId}`);
+      // Extract caller and receiver IDs (handle populated objects)
+      let callerId: string;
+      let receiverId: string;
+      
+      if (typeof call.callerId === 'object' && (call.callerId as any)?._id) {
+        callerId = (call.callerId as any)._id.toString();
+      } else if (typeof call.callerId === 'string' && call.callerId.includes('ObjectId(')) {
+        const match = call.callerId.match(/ObjectId\('([^']+)'\)/);
+        callerId = match ? match[1] : call.callerId;
+      } else {
+        callerId = String(call.callerId);
       }
+      
+      if (typeof call.receiverId === 'object' && (call.receiverId as any)?._id) {
+        receiverId = (call.receiverId as any)._id.toString();
+      } else if (typeof call.receiverId === 'string' && call.receiverId.includes('ObjectId(')) {
+        const match = call.receiverId.match(/ObjectId\('([^']+)'\)/);
+        receiverId = match ? match[1] : call.receiverId;
+      } else {
+        receiverId = String(call.receiverId);
+      }
+      
+      console.log('📢 CallGateway: Extracted IDs - callerId:', callerId, 'receiverId:', receiverId);
+      
+      // Notify both participants  
+      console.log('📢 CallGateway: Sending call:accepted to caller room user_' + callerId);
+      this.server.to(`user_${callerId}`).emit('call:accepted', {
+        callId: data.callId,
+        call,
+        acceptedBy: userId,
+      });
+      
+      console.log('📢 CallGateway: Sending call:accepted to receiver room user_' + receiverId);
+      this.server.to(`user_${receiverId}`).emit('call:accepted', {
+        callId: data.callId,
+        call,
+        acceptedBy: userId,
+      });
 
-      this.logger.log(`Call accepted: ${data.callId} by user ${userId}`);
+      // Join both users to call room
+      console.log('🏠 CallGateway: Adding users to call room call_' + data.callId);
+      this.server.to(`user_${callerId}`).socketsJoin(`call_${data.callId}`);
+      this.server.to(`user_${receiverId}`).socketsJoin(`call_${data.callId}`);
+
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -141,6 +232,9 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       const userId = client.data.user?.userId;
+      console.log('❌ CallGateway: Call reject request from user:', userId);
+      console.log('❌ CallGateway: Reject data:', data);
+      
       const call = await this.callService.rejectCall(userId, data);
 
       // Notify caller about rejection
@@ -151,7 +245,7 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         reason: data.reason,
       });
 
-      this.logger.log(`Call rejected: ${data.callId} by user ${userId}`);
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -180,7 +274,7 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Remove users from call room
       this.server.in(`call_${data.callId}`).socketsLeave(`call_${data.callId}`);
 
-      this.logger.log(`Call ended: ${data.callId} by user ${userId}`);
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -217,7 +311,7 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         });
       }
 
-      this.logger.log(`WebRTC offer sent in call ${data.callId}`);
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -252,7 +346,7 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         });
       }
 
-      this.logger.log(`WebRTC answer sent in call ${data.callId}`);
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -327,7 +421,7 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         activeCall,
       });
 
-      this.logger.log(`User ${userId} joined call ${data.callId}`);
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,
@@ -358,7 +452,7 @@ export class CallGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         video: data.video,
       });
 
-      this.logger.log(`Media status updated for user ${userId} in call ${data.callId}`);
+
     } catch (error) {
       client.emit('call:error', { 
         message: error.message,

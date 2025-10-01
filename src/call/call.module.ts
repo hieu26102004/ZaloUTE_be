@@ -7,6 +7,9 @@ import { CallRepositoryImpl } from './infrastructure/call.repository.impl';
 import { Call, CallSchema } from './infrastructure/call.schema';
 import { CALL_REPOSITORY_TOKEN } from './domain/repositories/call.repository.token';
 import { JwtService } from 'src/shared/infrastructure/jwt.service';
+import { WsJwtGuard } from '../socket/ws-jwt.guard';
+
+console.log('🎯 CallModule loading...');
 
 @Module({
   imports: [
@@ -21,6 +24,7 @@ import { JwtService } from 'src/shared/infrastructure/jwt.service';
       useClass: CallRepositoryImpl,
     },
     JwtService,
+    WsJwtGuard,
   ],
   exports: [CallService, CALL_REPOSITORY_TOKEN],
 })

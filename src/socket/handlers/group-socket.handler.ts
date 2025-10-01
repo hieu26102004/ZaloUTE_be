@@ -15,8 +15,6 @@ import { SOCKET_EVENTS } from '../constants';
 
 @Injectable()
 export class GroupSocketHandler {
-  private readonly logger = new Logger(GroupSocketHandler.name);
-
   constructor(
     private readonly conversationService: ConversationService,
   ) {}
@@ -41,14 +39,11 @@ export class GroupSocketHandler {
         createdBy: userId.toString()
       });
 
-      this.logger.log(`Group created: ${conversation._id} by user ${userId}`);
-      
       socket.emit(SOCKET_EVENTS.GROUP_CREATED, {
         success: true,
         conversation
       });
     } catch (error) {
-      this.logger.error('Create group error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to create group',
         event: 'create_group'
@@ -74,10 +69,7 @@ export class GroupSocketHandler {
         updatedBy: userId.toString(),
         conversation
       });
-
-      this.logger.log(`Group name updated: ${conversationId} by user ${userId}`);
     } catch (error) {
-      this.logger.error('Update group name error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to update group name',
         event: 'update_group_name'
@@ -107,10 +99,7 @@ export class GroupSocketHandler {
         addedBy: userId.toString(),
         conversation
       });
-
-      this.logger.log(`Members added to group: ${conversationId} by user ${userId}`);
     } catch (error) {
-      this.logger.error('Add group members error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to add group members',
         event: 'add_group_members'
@@ -137,10 +126,7 @@ export class GroupSocketHandler {
         removedBy: adminId.toString(),
         conversation
       });
-
-      this.logger.log(`Member removed from group: ${conversationId} by admin ${adminId}`);
     } catch (error) {
-      this.logger.error('Remove group member error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to remove group member',
         event: 'remove_group_member'
@@ -165,14 +151,11 @@ export class GroupSocketHandler {
         conversation
       });
 
-      this.logger.log(`User left group: ${userId} from ${conversationId}`);
-      
       socket.emit(SOCKET_EVENTS.GROUP_MEMBER_LEFT, {
         success: true,
         conversationId: conversationId.toString()
       });
     } catch (error) {
-      this.logger.error('Leave group error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to leave group',
         event: 'leave_group'
@@ -200,9 +183,7 @@ export class GroupSocketHandler {
         conversation
       });
 
-      this.logger.log(`Group admin transferred: ${conversationId} from ${currentAdminId} to ${newAdminId}`);
     } catch (error) {
-      this.logger.error('Transfer group admin error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to transfer group admin',
         event: 'transfer_group_admin'
@@ -223,10 +204,7 @@ export class GroupSocketHandler {
         adminId: adminId.toString(),
         message: 'Group has been dissolved by admin'
       });
-
-      this.logger.log(`Group dissolved: ${conversationId} by admin ${adminId}`);
     } catch (error) {
-      this.logger.error('Dissolve group error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { 
         message: error.message || 'Failed to dissolve group',
         event: 'dissolve_group'
