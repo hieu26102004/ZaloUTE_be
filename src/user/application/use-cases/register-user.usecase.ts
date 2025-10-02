@@ -34,6 +34,9 @@ export class RegisterUserUseCase {
     const hashedPassword = await this.passwordHasher.hash(password);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+
+    console.log('Generated OTP:', otp); // Debug log
+
     const user = await this.userRepository.createUser({
       username,
       email,
@@ -44,12 +47,17 @@ export class RegisterUserUseCase {
       otp,
       otpExpiresAt,
     });
+
+    console.log('OTP saved to DB:', user.otp); // Debug log
+
     await this.mailService.sendMail(
       email,
       'Account Activation',
       `Your OTP code is: ${otp}`,
       `<p>Your OTP code is: <strong>${otp}</strong></p>`,
     );
+
+    console.log('OTP sent via email:', otp); // Debug log
     return user;
   }
 }

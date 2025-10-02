@@ -50,7 +50,6 @@ export class UserRepositoryImpl implements UserRepository {
     const existingUser = await this.findByEmail(user.email);
     if (existingUser) throw new Error('User already exists');
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const created = await this.userModel.create({
       username: user.username,
       email: user.email,
@@ -59,8 +58,8 @@ export class UserRepositoryImpl implements UserRepository {
       lastname: user.lastname || '',
       phone: user.phone || '',
       isActive: false,
-      otp: otp,
-      otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // OTP valid for 10 minutes
+      otp: user.otp, // Sử dụng OTP được truyền vào
+      otpExpiresAt: user.otpExpiresAt, // Sử dụng otpExpiresAt được truyền vào
     });
     const doc = created.toObject ? created.toObject() : created;
     const d = doc as unknown as UserDoc;
@@ -69,6 +68,8 @@ export class UserRepositoryImpl implements UserRepository {
       username: d.username,
       email: d.email,
       isActive: d.isActive,
+      otp: d.otp, // Return OTP trong response
+      otpExpiresAt: d.otpExpiresAt, // Return otpExpiresAt trong response
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
     };
