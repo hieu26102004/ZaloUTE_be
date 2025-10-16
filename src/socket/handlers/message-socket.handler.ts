@@ -103,6 +103,18 @@ export class MessageSocketHandler {
 
           for (const pid of participantIds) {
             try {
+              // Debug: check how many sockets are currently in the personal room for this user
+              try {
+                const socketsInPersonal = await io.in(pid).fetchSockets();
+                const socketIds = (socketsInPersonal || []).map((s: any) => s.id);
+                this.logger.debug(`Personal room ${pid} has ${socketIds.length} sockets: ${JSON.stringify(socketIds)}`);
+                if (!socketIds.length) {
+                  this.logger.warn(`No sockets found in personal room for user ${pid} when sending call-invite`);
+                }
+              } catch (e) {
+                this.logger.debug(`Could not fetch sockets for personal room ${pid}: ${e}`);
+              }
+
               // Emit a lightweight INCOMING_CALL event to the user's personal room so clients not in the conversation room get a fast notification
               io.in(pid).emit(SOCKET_EVENTS.INCOMING_CALL, {
                 conversationId,
