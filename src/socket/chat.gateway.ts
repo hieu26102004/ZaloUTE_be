@@ -123,6 +123,30 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async handleConnection(socket: Socket) {
     try {
+      // Debug: log handshake details observed by server
+      try {
+        const hs = (socket as any).handshake || {};
+        // log query/auth objects and namespace name explicitly
+        this.logger.debug(`Incoming socket handshake origin: ${hs.origin || hs.headers?.origin || ''}, url: ${hs.url || hs.pathname || ''}`);
+        try {
+          this.logger.debug(`Handshake query: ${JSON.stringify(hs.query || {})}`);
+        } catch (e) {
+          this.logger.debug('Handshake query: [unable to stringify]');
+        }
+        try {
+          this.logger.debug(`Handshake auth: ${JSON.stringify(hs.auth || {})}`);
+        } catch (e) {
+          this.logger.debug('Handshake auth: [unable to stringify]');
+        }
+        try {
+          this.logger.debug(`Socket namespace: ${socket.nsp?.name || '[unknown]'}`);
+        } catch (e) {
+          this.logger.debug('Socket namespace: [error]');
+        }
+      } catch (e) {
+        // ignore
+      }
+
       const userId = (socket as any).data?.userId;
       if (userId) {
         // add socket id to user's set
