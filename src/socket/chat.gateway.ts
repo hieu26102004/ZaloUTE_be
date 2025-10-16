@@ -419,11 +419,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       if (data.room) {
-        socket.to(data.room).emit(SOCKET_EVENTS.CALL_USER_LEFT, { socketId: socket.id });
+        socket.to(data.room).emit(SOCKET_EVENTS.CALL_USER_LEFT, { socketId: socket.id, userId: (socket as any).data?.userId, username: (socket as any).data?.username });
         socket.leave(data.room);
       }
       if (data.target) {
-        this.io.to(data.target).emit(SOCKET_EVENTS.CALL_USER_LEFT, { socketId: socket.id });
+        this.io.to(data.target).emit(SOCKET_EVENTS.CALL_USER_LEFT, { socketId: socket.id, userId: (socket as any).data?.userId, username: (socket as any).data?.username });
       }
     } catch (error) {
       this.logger.error('Call hangup error:', error);

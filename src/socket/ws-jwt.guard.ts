@@ -46,10 +46,11 @@ export class WsJwtGuard implements CanActivate {
         return false;
       }
 
-      // Gán userId vào socket để các handler dùng
+      // Gán userId, email, username vào socket để các handler dùng
       (client as any).data = { 
         userId: payload.sub, 
-        email: payload.email 
+        email: payload.email,
+        username: payload.username || payload.user || null,
       };
       
       this.logger.log(`User ${payload.sub} authenticated via WebSocket`);
