@@ -40,4 +40,12 @@ export const SOCKET_EVENTS = {
   // Error events
   ERROR: 'socket_error',
   CONNECTION_SUCCESS: 'connection_success',
+  // Call / WebRTC signaling events
+  CALL_JOIN: 'call_join',
+  CALL_USER_JOINED: 'call_user_joined',
+  CALL_OFFER: 'call_offer',
+  CALL_ANSWER: 'call_answer',
+  CALL_ICE_CANDIDATE: 'call_ice_candidate',
+  CALL_USER_LEFT: 'call_user_left',
+  CALL_HANGUP: 'call_hangup',
 } as const;
