@@ -16,7 +16,14 @@ export class LoginUseCase {
   ) {}
 
   async execute(identifier: string, password: string): Promise<{ user: Partial<UserEntity>; accessToken: string }> {
-    const isEmail = /.+@.+\..+/.test(identifier);
+    const isEmail = identifier.includes('@');
+    if (isEmail) {
+      // Kiểm tra format email hợp lệ
+      const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+      if (!emailRegex.test(identifier)) {
+        throw new UnauthorizedException('Format email không hợp lệ');
+      }
+    }
     const user = isEmail
       ? await this.userRepository.findByEmail(identifier)
       : await this.userRepository.findByUsername(identifier);
