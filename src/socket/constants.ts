@@ -40,6 +40,8 @@ export const SOCKET_EVENTS = {
   // Error events
   ERROR: 'socket_error',
   CONNECTION_SUCCESS: 'connection_success',
+  // Incoming call notification (delivered to personal rooms)
+  INCOMING_CALL: 'incoming_call',
   // Call / WebRTC signaling events
   CALL_JOIN: 'call_join',
   CALL_USER_JOINED: 'call_user_joined',

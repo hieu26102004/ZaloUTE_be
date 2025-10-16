@@ -154,6 +154,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         set.add(socket.id);
         this.connectedUsers.set(userId, set);
 
+        // Ensure the socket joins a personal room named by userId so server can target the user directly
+        try {
+          socket.join(userId);
+          this.logger.debug(`Socket ${socket.id} joined personal room ${userId}`);
+        } catch (e) {
+          this.logger.warn(`Failed to join personal room for user ${userId}: ${e}`);
+        }
+
         // Join user to their conversation rooms
         await this.conversationSocketHandler.joinUserConversations(socket, userId);
 
