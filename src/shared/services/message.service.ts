@@ -50,6 +50,15 @@ export class MessageService {
     );
   }
 
+  async markMessageAsReadForUsers(messageId: Types.ObjectId, userIds: Types.ObjectId[]) {
+    // For now, we'll just mark the message as read
+    // In a more complex system, you might want to track which specific users have read the message
+    return this.messageModel.updateOne(
+      { _id: messageId },
+      { isRead: true }
+    );
+  }
+
   async getMessageCount(conversationId: Types.ObjectId) {
     return this.messageModel.countDocuments({ conversation: conversationId });
   }

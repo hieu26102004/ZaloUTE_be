@@ -63,14 +63,34 @@ export class MessageSocketHandler {
         data.type || 'text'
       );
 
+      // Check who is currently online in this conversation room
+      const roomName = `${conversationId}`;
+      const connectedSockets = await io.in(roomName).fetchSockets();
+      const onlineUserIds = connectedSockets
+        .map(s => s.data?.userId)
+        .filter(id => id && id !== socket.data.userId); // Exclude sender
+
+      // If there are online users in the conversation, mark message as read for them
+      if (onlineUserIds.length > 0) {
+        await this.messageService.markMessageAsReadForUsers(
+          new Types.ObjectId((message as any)._id),
+          onlineUserIds.map(id => new Types.ObjectId(id))
+        );
+      }
+
+      // Update conversation's lastMessage
+      await this.conversationService.updateLastMessage(
+        new Types.ObjectId(conversationId),
+        new Types.ObjectId((message as any)._id)
+      );
+
       // Populate sender information
       const populatedMessage = await this.messageService.getMessageById(new Types.ObjectId((message as any)._id.toString()));
 
       // Broadcast message to all participants in the conversation room
-      const roomName = `${conversationId}`;
       io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
 
-      this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}`);
+      this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}, online users: ${onlineUserIds.length}`);
       
     } catch (err) {
       this.logger.error('Send message failed:', err);
@@ -91,6 +111,32 @@ export class MessageSocketHandler {
     } catch (err) {
       this.logger.error('Get messages failed:', err);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Get messages failed', error: err.message });
+    }
+  }
+
+  async handleMarkAsRead(socket: any, io: any, data: any) {
+    try {
+      const { conversationId } = data;
+      const userId = new Types.ObjectId(socket.data.userId);
+      
+      this.logger.log(`Marking messages as read for conversation: ${conversationId} by user: ${userId}`);
+      
+      // Mark messages as read
+      await this.messageService.markAsRead(new Types.ObjectId(conversationId), userId);
+      
+      // Broadcast to all participants that messages have been read
+      const roomName = `${conversationId}`;
+      io.to(roomName).emit(SOCKET_EVENTS.MESSAGES_READ, {
+        conversationId,
+        userId: userId.toString(),
+        readAt: new Date().toISOString()
+      });
+      
+      this.logger.log(`Messages marked as read for conversation ${conversationId}`);
+      
+    } catch (err) {
+      this.logger.error('Mark as read failed:', err);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Mark as read failed', error: err.message });
     }
   }
 }

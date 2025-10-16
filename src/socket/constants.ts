@@ -5,6 +5,8 @@ export const SOCKET_EVENTS = {
   RECEIVE_MESSAGE: 'receive_message',
   GET_MESSAGES: 'get_messages',
   GET_MESSAGES_RESULT: 'get_messages_result',
+  MARK_AS_READ: 'mark_as_read',
+  MESSAGES_READ: 'messages_read',
   
   // Conversation events
   GET_CONVERSATIONS: 'get_conversations',

@@ -13,6 +13,13 @@ export class ConversationService {
     return this.conversationModel
       .find({ participants: userId })
       .populate('participants', 'username email firstname lastname avatarUrl')
+      .populate({
+        path: 'lastMessage',
+        populate: {
+          path: 'sender',
+          select: 'username email firstname lastname avatarUrl'
+        }
+      })
       .sort({ updatedAt: -1 })
       .exec();
   }
@@ -76,6 +83,13 @@ export class ConversationService {
       .find({ participants: userId })
       .populate('participants', 'username email firstname lastname avatarUrl')
       .populate('groupAdmin', 'username email firstname lastname avatarUrl')
+      .populate({
+        path: 'lastMessage',
+        populate: {
+          path: 'sender',
+          select: 'username email firstname lastname avatarUrl'
+        }
+      })
       .sort({ updatedAt: -1 })
       .exec();
   }
@@ -270,5 +284,16 @@ export class ConversationService {
     await this.conversationModel.findByIdAndDelete(conversationId);
     
     return { success: true, message: 'Group dissolved successfully' };
+  }
+
+  async updateLastMessage(conversationId: Types.ObjectId, messageId: Types.ObjectId) {
+    return this.conversationModel.findByIdAndUpdate(
+      conversationId,
+      { 
+        lastMessage: messageId,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
   }
 }

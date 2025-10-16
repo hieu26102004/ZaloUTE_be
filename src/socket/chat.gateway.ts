@@ -204,6 +204,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  @SubscribeMessage(SOCKET_EVENTS.MARK_AS_READ)
+  async handleMarkAsRead(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      this.logger.log(`MARK_AS_READ received data: ${JSON.stringify(data)}`);
+      await this.messageSocketHandler.handleMarkAsRead(socket, this.io, data);
+    } catch (error) {
+      this.logger.error('Mark as read error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Mark as read failed' });
+    }
+  }
+
   @SubscribeMessage(SOCKET_EVENTS.GET_CONVERSATIONS)
   async handleGetConversations(
     @MessageBody() data: any,
