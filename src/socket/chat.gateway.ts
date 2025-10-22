@@ -126,6 +126,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (userId) {
         this.connectedUsers.set(userId, socket.id);
         
+        // Join user to their personal room for conversation list updates
+        socket.join(userId);
+        
         // Join user to their conversation rooms
         await this.conversationSocketHandler.joinUserConversations(socket, userId);
         

@@ -31,7 +31,15 @@ export class MessageController {
       
       // Check if user is participant in this conversation
       const conversation = await this.conversationService.findConversationById(convId);
-      if (!conversation || !conversation.participants.includes(userId)) {
+      const isParticipant = conversation && Array.isArray(conversation.participants) &&
+        conversation.participants.some((p: any) => {
+          // handle both ObjectId and string stored forms
+          if (!p) return false;
+          if (typeof p === 'string') return p === userId.toString();
+          if (typeof p.equals === 'function') return p.equals(userId);
+          return p.toString() === userId.toString();
+        });
+      if (!conversation || !isParticipant) {
         throw new HttpException('Unauthorized access to conversation', HttpStatus.FORBIDDEN);
       }
 

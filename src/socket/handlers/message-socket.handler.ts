@@ -84,11 +84,30 @@ export class MessageSocketHandler {
         new Types.ObjectId((message as any)._id)
       );
 
+      // Get updated conversation with populated lastMessage
+      const updatedConversation = await this.conversationService.getUpdatedConversation(
+        new Types.ObjectId(conversationId)
+      );
+
       // Populate sender information
       const populatedMessage = await this.messageService.getMessageById(new Types.ObjectId((message as any)._id.toString()));
 
       // Broadcast message to all participants in the conversation room
       io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
+
+      // Broadcast updated conversation to all participants for conversation list update
+      if (updatedConversation) {
+        // Get all participants of the conversation
+        const participantIds = updatedConversation.participants.map((participant: any) => participant._id.toString());
+        
+        // Emit to all participants' personal rooms for conversation list update
+        for (const participantId of participantIds) {
+          io.to(participantId).emit(SOCKET_EVENTS.CONVERSATION_UPDATED, {
+            conversation: updatedConversation,
+            message: populatedMessage
+          });
+        }
+      }
 
       this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}, online users: ${onlineUserIds.length}`);
       
