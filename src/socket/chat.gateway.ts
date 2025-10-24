@@ -42,7 +42,8 @@ import { WsJwtGuard } from './ws-jwt.guard';
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() io: Server;
   private readonly logger = new Logger(ChatGateway.name);
-  private readonly connectedUsers = new Map<string, string>(); // userId -> socketId
+  // Map of userId -> set of socketIds (support multiple tabs/devices per user)
+  private readonly connectedUsers = new Map<string, Set<string>>();
 
   constructor(
     private readonly messageSocketHandler: MessageSocketHandler,
@@ -124,26 +125,60 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async handleConnection(socket: Socket) {
     try {
+      // Debug: log handshake details observed by server
+      try {
+        const hs = (socket as any).handshake || {};
+        // log query/auth objects and namespace name explicitly
+        this.logger.debug(`Incoming socket handshake origin: ${hs.origin || hs.headers?.origin || ''}, url: ${hs.url || hs.pathname || ''}`);
+        try {
+          this.logger.debug(`Handshake query: ${JSON.stringify(hs.query || {})}`);
+        } catch (e) {
+          this.logger.debug('Handshake query: [unable to stringify]');
+        }
+        try {
+          this.logger.debug(`Handshake auth: ${JSON.stringify(hs.auth || {})}`);
+        } catch (e) {
+          this.logger.debug('Handshake auth: [unable to stringify]');
+        }
+        try {
+          this.logger.debug(`Socket namespace: ${socket.nsp?.name || '[unknown]'}`);
+        } catch (e) {
+          this.logger.debug('Socket namespace: [error]');
+        }
+      } catch (e) {
+        // ignore
+      }
+
       const userId = (socket as any).data?.userId;
       if (userId) {
-        this.connectedUsers.set(userId, socket.id);
-        
-        // Join user to their personal room for conversation list updates
-        socket.join(userId);
-        
+        // add socket id to user's set
+        const set = this.connectedUsers.get(userId) ?? new Set<string>();
+        set.add(socket.id);
+        this.connectedUsers.set(userId, set);
+
+        // Ensure the socket joins a personal room named by userId so server can target the user directly
+        try {
+          socket.join(userId);
+          this.logger.debug(`Socket ${socket.id} joined personal room ${userId}`);
+        } catch (e) {
+          this.logger.warn(`Failed to join personal room for user ${userId}: ${e}`);
+        }
+
         // Join user to their conversation rooms
         await this.conversationSocketHandler.joinUserConversations(socket, userId);
-        
-        // Notify others that user is online
-        socket.broadcast.emit(SOCKET_EVENTS.USER_ONLINE, { userId });
-        
-        // Send connection success
-        socket.emit(SOCKET_EVENTS.CONNECTION_SUCCESS, { 
+
+        // If this is the first socket for user, notify others that user is online
+        if (set.size === 1) {
+          socket.broadcast.emit(SOCKET_EVENTS.USER_ONLINE, { userId });
+        }
+
+        // Send connection success to this socket
+        socket.emit(SOCKET_EVENTS.CONNECTION_SUCCESS, {
           message: 'Connected successfully',
-          userId 
+          userId,
         });
-        
-        this.logger.log(`User ${userId} connected`);
+
+        this.logger.log(`User ${userId} connected (socket ${socket.id})`);
       }
     } catch (error) {
       this.logger.error('Connection error:', error);
@@ -155,12 +190,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       const userId = (socket as any).data?.userId;
       if (userId) {
-        this.connectedUsers.delete(userId);
-        
-        // Notify others that user is offline
-        socket.broadcast.emit(SOCKET_EVENTS.USER_OFFLINE, { userId });
-        
-        this.logger.log(`User ${userId} disconnected`);
+        const set = this.connectedUsers.get(userId);
+        if (set) {
+          set.delete(socket.id);
+          if (set.size === 0) {
+            this.connectedUsers.delete(userId);
+            // Notify others that user is offline
+            socket.broadcast.emit(SOCKET_EVENTS.USER_OFFLINE, { userId });
+          } else {
+            // update map with remaining sockets
+            this.connectedUsers.set(userId, set);
+          }
+        }
+
+        this.logger.log(`User ${userId} disconnected (socket ${socket.id})`);
       }
     } catch (error) {
       this.logger.error('Disconnect error:', error);
@@ -348,6 +391,92 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  // --- WebRTC / Call signaling handlers ---
+  @SubscribeMessage(SOCKET_EVENTS.CALL_JOIN)
+  async handleCallJoin(
+    @MessageBody() data: { room: string },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      const room = data.room;
+      socket.join(room);
+      // Notify existing sockets in the room about the new join
+      socket.to(room).emit(SOCKET_EVENTS.CALL_USER_JOINED, { socketId: socket.id });
+
+      // Send existing members to the joining socket so it knows peers immediately
+      const socketsInRoom = await this.io.in(room).allSockets(); // Set<string>
+      for (const sid of socketsInRoom) {
+        if (sid !== socket.id) {
+          // send info about existing peer to the new socket
+          socket.emit(SOCKET_EVENTS.CALL_USER_JOINED, { socketId: sid });
+        }
+      }
+
+      this.logger.log(`Socket ${socket.id} joined call room ${room}`);
+    } catch (error) {
+      this.logger.error('Call join error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Call join failed' });
+    }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.CALL_OFFER)
+  async handleCallOffer(
+    @MessageBody() data: { target: string; offer: any },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      this.io.to(data.target).emit(SOCKET_EVENTS.CALL_OFFER, { from: socket.id, offer: data.offer });
+    } catch (error) {
+      this.logger.error('Call offer error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Call offer failed' });
+    }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.CALL_ANSWER)
+  async handleCallAnswer(
+    @MessageBody() data: { target: string; answer: any },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      this.io.to(data.target).emit(SOCKET_EVENTS.CALL_ANSWER, { from: socket.id, answer: data.answer });
+    } catch (error) {
+      this.logger.error('Call answer error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Call answer failed' });
+    }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.CALL_ICE_CANDIDATE)
+  async handleCallIce(
+    @MessageBody() data: { target: string; candidate: any },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      this.io.to(data.target).emit(SOCKET_EVENTS.CALL_ICE_CANDIDATE, { from: socket.id, candidate: data.candidate });
+    } catch (error) {
+      this.logger.error('Call ice candidate error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Call ice candidate failed' });
+    }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.CALL_HANGUP)
+  async handleCallHangup(
+    @MessageBody() data: { room?: string; target?: string },
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      if (data.room) {
+        socket.to(data.room).emit(SOCKET_EVENTS.CALL_USER_LEFT, { socketId: socket.id, userId: (socket as any).data?.userId, username: (socket as any).data?.username });
+        socket.leave(data.room);
+      }
+      if (data.target) {
+        this.io.to(data.target).emit(SOCKET_EVENTS.CALL_USER_LEFT, { socketId: socket.id, userId: (socket as any).data?.userId, username: (socket as any).data?.username });
+      }
+    } catch (error) {
+      this.logger.error('Call hangup error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Call hangup failed' });
+    }
+  }
+
   // Group management socket events
   @SubscribeMessage('create_group')
   async handleCreateGroup(
@@ -482,13 +611,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
-  // Helper method to get connected user socket
-  getUserSocket(userId: string): string | undefined {
-    return this.connectedUsers.get(userId);
+  // Helper method to get connected user socket ids
+  getUserSockets(userId: string): string[] {
+    const set = this.connectedUsers.get(userId);
+    return set ? Array.from(set) : [];
   }
 
   // Helper method to check if user is online
   isUserOnline(userId: string): boolean {
-    return this.connectedUsers.has(userId);
+    return this.connectedUsers.has(userId) && (this.connectedUsers.get(userId)?.size ?? 0) > 0;
   }
 }

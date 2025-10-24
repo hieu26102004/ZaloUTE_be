@@ -5,3 +5,4 @@ export class DeleteMessageDto {
   @IsNotEmpty()
   messageId: string;
 }
+

@@ -90,6 +90,48 @@ export class MessageSocketHandler {
       // Broadcast message to all participants in the conversation room
       io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
 
+      // If the message is a call invite, also notify participants directly (per-user rooms)
+      try {
+        const CALL_INVITE_PREFIX = '[CALL_INVITE]';
+        if (typeof (message as any).content === 'string' && (message as any).content.startsWith(CALL_INVITE_PREFIX)) {
+          // Get conversation participants to notify
+          const conversation = await this.conversationService.findConversationById(new Types.ObjectId(conversationId));
+          const participantIds: string[] = (conversation?.participants || [])
+            .map((p: any) => (typeof p === 'string' ? p : (p._id ? p._id.toString() : null)))
+            .filter(Boolean)
+            .filter((id: string) => id !== socket.data.userId); // exclude sender
+
+          for (const pid of participantIds) {
+            try {
+              // Debug: check how many sockets are currently in the personal room for this user
+              try {
+                const socketsInPersonal = await io.in(pid).fetchSockets();
+                const socketIds = (socketsInPersonal || []).map((s: any) => s.id);
+                this.logger.debug(`Personal room ${pid} has ${socketIds.length} sockets: ${JSON.stringify(socketIds)}`);
+                if (!socketIds.length) {
+                  this.logger.warn(`No sockets found in personal room for user ${pid} when sending call-invite`);
+                }
+              } catch (e) {
+                this.logger.debug(`Could not fetch sockets for personal room ${pid}: ${e}`);
+              }
+
+              // Emit a lightweight INCOMING_CALL event to the user's personal room so clients not in the conversation room get a fast notification
+              io.in(pid).emit(SOCKET_EVENTS.INCOMING_CALL, {
+                conversationId,
+                message: populatedMessage,
+              });
+              // Also emit RECEIVE_MESSAGE as before to ensure message consistency for clients that handle messages
+              io.in(pid).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
+              this.logger.log(`Sent call-invite notification to user ${pid}`);
+            } catch (e) {
+              this.logger.warn(`Failed to send call invite to user ${pid}: ${e}`);
+            }
+          }
+        }
+      } catch (e) {
+        this.logger.warn('Error while sending call invite notifications:', e);
+      }
+
       this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}, online users: ${onlineUserIds.length}`);
       
     } catch (err) {
