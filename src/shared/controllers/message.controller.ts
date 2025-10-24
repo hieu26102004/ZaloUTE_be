@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Delete,
+  Put,
   Body,
   Param,
   UseGuards,
@@ -95,6 +96,57 @@ export class MessageController {
     } catch (error) {
       console.error('Remove reaction error:', error);
       throw new HttpException('Failed to remove reaction', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Put(':messageId')
+  async editMessage(
+    @Param('messageId') messageId: string,
+    @Body() body: any,
+    @Request() req: any
+  ) {
+    try {
+      const { content } = body;
+      const userId = new Types.ObjectId(req.user.userId);
+      const msgId = new Types.ObjectId(messageId);
+
+      if (!content || content.trim() === '') {
+        throw new HttpException('Content cannot be empty', HttpStatus.BAD_REQUEST);
+      }
+
+      const updatedMessage = await this.messageService.editMessage(msgId, userId, content);
+      
+      return updatedMessage;
+    } catch (error) {
+      console.error('Edit message error:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (error.message === 'Message not found or you are not authorized to edit this message') {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException('Failed to edit message', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Delete(':messageId')
+  async deleteMessage(
+    @Param('messageId') messageId: string,
+    @Request() req: any
+  ) {
+    try {
+      const userId = new Types.ObjectId(req.user.userId);
+      const msgId = new Types.ObjectId(messageId);
+
+      const deletedMessage = await this.messageService.deleteMessage(msgId, userId);
+      
+      return deletedMessage;
+    } catch (error) {
+      console.error('Delete message error:', error);
+      if (error.message === 'Message not found or you are not authorized to delete this message') {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException('Failed to delete message', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -18,6 +18,8 @@ import { Types } from 'mongoose';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { GetConversationsDto } from './dto/get-conversations.dto';
+import { EditMessageDto } from './dto/edit-message.dto';
+import { DeleteMessageDto } from './dto/delete-message.dto';
 import { 
   CreateGroupSocketDto, 
   UpdateGroupNameSocketDto, 
@@ -218,6 +220,50 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     } catch (error) {
       this.logger.error('Mark as read error:', error);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Mark as read failed' });
+    }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.EDIT_MESSAGE)
+  async handleEditMessage(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      // Validate DTO
+      const dto = plainToInstance(EditMessageDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      
+      this.logger.log(`EDIT_MESSAGE received data: ${JSON.stringify(data)}`);
+      await this.messageSocketHandler.handleEditMessage(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Edit message error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Edit message failed' });
+    }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.DELETE_MESSAGE)
+  async handleDeleteMessage(
+    @MessageBody() data: any,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    try {
+      // Validate DTO
+      const dto = plainToInstance(DeleteMessageDto, data);
+      const errors = await validate(dto, { skipMissingProperties: false });
+      if (errors.length > 0) {
+        socket.emit(SOCKET_EVENTS.ERROR, { message: 'Validation failed', errors });
+        return;
+      }
+      
+      this.logger.log(`DELETE_MESSAGE received data: ${JSON.stringify(data)}`);
+      await this.messageSocketHandler.handleDeleteMessage(socket, this.io, dto);
+    } catch (error) {
+      this.logger.error('Delete message error:', error);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Delete message failed' });
     }
   }
 

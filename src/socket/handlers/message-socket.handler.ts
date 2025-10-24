@@ -84,30 +84,11 @@ export class MessageSocketHandler {
         new Types.ObjectId((message as any)._id)
       );
 
-      // Get updated conversation with populated lastMessage
-      const updatedConversation = await this.conversationService.getUpdatedConversation(
-        new Types.ObjectId(conversationId)
-      );
-
       // Populate sender information
       const populatedMessage = await this.messageService.getMessageById(new Types.ObjectId((message as any)._id.toString()));
 
       // Broadcast message to all participants in the conversation room
       io.to(roomName).emit(SOCKET_EVENTS.RECEIVE_MESSAGE, populatedMessage);
-
-      // Broadcast updated conversation to all participants for conversation list update
-      if (updatedConversation) {
-        // Get all participants of the conversation
-        const participantIds = updatedConversation.participants.map((participant: any) => participant._id.toString());
-        
-        // Emit to all participants' personal rooms for conversation list update
-        for (const participantId of participantIds) {
-          io.to(participantId).emit(SOCKET_EVENTS.CONVERSATION_UPDATED, {
-            conversation: updatedConversation,
-            message: populatedMessage
-          });
-        }
-      }
 
       this.logger.log(`Message sent to conversation ${conversationId} by user ${socket.data.userId}, online users: ${onlineUserIds.length}`);
       
@@ -156,6 +137,79 @@ export class MessageSocketHandler {
     } catch (err) {
       this.logger.error('Mark as read failed:', err);
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Mark as read failed', error: err.message });
+    }
+  }
+
+  async handleEditMessage(socket: any, io: any, data: any) {
+    try {
+      const { messageId, content } = data;
+      const userId = new Types.ObjectId(socket.data.userId);
+      
+      this.logger.log(`Editing message: ${messageId} by user: ${userId}`);
+      
+      // Edit the message
+      const updatedMessage = await this.messageService.editMessage(
+        new Types.ObjectId(messageId),
+        userId,
+        content
+      );
+
+      // Get conversation ID for broadcasting
+      const conversationId = await this.getConversationIdByMessageId(messageId);
+      
+      if (conversationId) {
+        // Broadcast updated message to all participants in the conversation room
+        const roomName = `${conversationId}`;
+        io.to(roomName).emit(SOCKET_EVENTS.MESSAGE_EDITED, {
+          messageId,
+          conversationId,
+          updatedMessage,
+          editedBy: userId.toString(),
+          editedAt: new Date().toISOString()
+        });
+        
+        this.logger.log(`Message edited and broadcasted to conversation ${conversationId}`);
+      }
+      
+    } catch (err) {
+      this.logger.error('Edit message failed:', err);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Edit message failed', error: err.message });
+    }
+  }
+
+  async handleDeleteMessage(socket: any, io: any, data: any) {
+    try {
+      const { messageId } = data;
+      const userId = new Types.ObjectId(socket.data.userId);
+      
+      this.logger.log(`Deleting message: ${messageId} by user: ${userId}`);
+      
+      // Delete the message
+      const deletedMessage = await this.messageService.deleteMessage(
+        new Types.ObjectId(messageId),
+        userId
+      );
+
+      // Get conversation ID for broadcasting
+      const conversationId = await this.getConversationIdByMessageId(messageId);
+      
+      if (conversationId) {
+        // Broadcast deleted message to all participants in the conversation room
+        const roomName = `${conversationId}`;
+        io.to(roomName).emit(SOCKET_EVENTS.MESSAGE_DELETED, {
+          messageId,
+          conversationId,
+          deletedMessage,
+          deletedBy: userId.toString(),
+          deletedAt: new Date().toISOString()
+        });
+        
+        this.logger.log(`Message deleted and broadcasted to conversation ${conversationId}`);
+      }
+      
+    } catch (err) {
+      this.logger.error('Delete message failed:', err);
+      socket.emit(SOCKET_EVENTS.ERROR, { message: 'Delete message failed', error: err.message });
     }
   }
 }

@@ -82,4 +82,53 @@ export class MessageService {
     .populate('sender', 'username email firstname lastname avatarUrl')
     .exec();
   }
+
+  async editMessage(messageId: Types.ObjectId, userId: Types.ObjectId, newContent: string) {
+    // Check if the message exists and belongs to the user
+    const message = await this.messageModel.findOne({
+      _id: messageId,
+      sender: userId
+    });
+
+    if (!message) {
+      throw new Error('Message not found or you are not authorized to edit this message');
+    }
+
+    // Update the message content
+    const updatedMessage = await this.messageModel.findByIdAndUpdate(
+      messageId,
+      { 
+        content: newContent,
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).populate('sender', 'username email firstname lastname avatarUrl');
+
+    return updatedMessage;
+  }
+
+  async deleteMessage(messageId: Types.ObjectId, userId: Types.ObjectId) {
+    // Check if the message exists and belongs to the user
+    const message = await this.messageModel.findOne({
+      _id: messageId,
+      sender: userId
+    });
+
+    if (!message) {
+      throw new Error('Message not found or you are not authorized to delete this message');
+    }
+
+    // Soft delete the message
+    const deletedMessage = await this.messageModel.findByIdAndUpdate(
+      messageId,
+      { 
+        isDeleted: true,
+        deletedAt: new Date(),
+        content: 'Tin nhắn đã được thu hồi'
+      },
+      { new: true }
+    ).populate('sender', 'username email firstname lastname avatarUrl');
+
+    return deletedMessage;
+  }
 }

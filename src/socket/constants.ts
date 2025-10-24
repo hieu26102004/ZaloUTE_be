@@ -7,6 +7,10 @@ export const SOCKET_EVENTS = {
   GET_MESSAGES_RESULT: 'get_messages_result',
   MARK_AS_READ: 'mark_as_read',
   MESSAGES_READ: 'messages_read',
+  EDIT_MESSAGE: 'edit_message',
+  MESSAGE_EDITED: 'message_edited',
+  DELETE_MESSAGE: 'delete_message',
+  MESSAGE_DELETED: 'message_deleted',
   
   // Conversation events
   GET_CONVERSATIONS: 'get_conversations',
