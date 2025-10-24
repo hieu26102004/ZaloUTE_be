@@ -296,4 +296,19 @@ export class ConversationService {
       { new: true }
     );
   }
+
+  async getUpdatedConversation(conversationId: Types.ObjectId) {
+    return this.conversationModel
+      .findById(conversationId)
+      .populate('participants', 'username email firstname lastname avatarUrl')
+      .populate('groupAdmin', 'username email firstname lastname avatarUrl')
+      .populate({
+        path: 'lastMessage',
+        populate: {
+          path: 'sender',
+          select: 'username email firstname lastname avatarUrl'
+        }
+      })
+      .exec();
+  }
 }

@@ -84,6 +84,11 @@ export class MessageSocketHandler {
         new Types.ObjectId((message as any)._id)
       );
 
+      // Get updated conversation with populated lastMessage
+      const updatedConversation = await this.conversationService.getUpdatedConversation(
+        new Types.ObjectId(conversationId)
+      );
+
       // Populate sender information
       const populatedMessage = await this.messageService.getMessageById(new Types.ObjectId((message as any)._id.toString()));
 
