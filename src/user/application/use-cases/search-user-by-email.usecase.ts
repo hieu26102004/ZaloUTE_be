@@ -38,6 +38,7 @@ export class SearchUserByEmailUseCase {
         email: user.email,
         firstname: user.firstname,
         lastname: user.lastname,
+        phone: user.phone,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
         isFriend: friendship?.status === FriendshipStatus.ACCEPTED,

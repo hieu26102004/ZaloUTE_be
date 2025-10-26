@@ -28,6 +28,7 @@ export class FriendProfileDto {
   email: string;
   firstname: string;
   lastname: string;
+  phone?: string;
   avatarUrl?: string;
   createdAt: Date;
   isFriend?: boolean;
